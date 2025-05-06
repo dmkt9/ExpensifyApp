@@ -1,5 +1,5 @@
 import {Str} from 'expensify-common';
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 // eslint-disable-next-line no-restricted-imports
 import type {Text as RNText} from 'react-native';
 import {StyleSheet} from 'react-native';
@@ -34,7 +34,8 @@ function BaseAnchorForCommentsOnly({
     const StyleUtils = useStyleUtils();
     const linkRef = useRef<RNText>(null);
     const flattenStyle = StyleSheet.flatten(style);
-
+    const [isPressed, setIsPressed] = useState(false);
+    
     useEffect(
         () => () => {
             hideContextMenu();
@@ -46,13 +47,19 @@ function BaseAnchorForCommentsOnly({
 
     const linkProps: LinkProps = {};
     if (onPress) {
-        linkProps.onPress = onPress;
+        linkProps.onPress = () => setIsPressed(true);
     } else {
         linkProps.href = href;
     }
     const defaultTextStyle = canUseTouchScreen() || shouldUseNarrowLayout ? {} : {...styles.userSelectText, ...styles.cursorPointer};
     const isEmail = Str.isValidEmail(href.replace(/mailto:/i, ''));
     const linkHref = !linkHasImage ? href : undefined;
+    useEffect(() => {
+        if (isPressed) {
+            setIsPressed(false); // Reset state
+            onPress?.(); // Trigger navigation
+        }
+    }, [isPressed]);
 
     return (
         <PressableWithSecondaryInteraction
@@ -81,7 +88,7 @@ function BaseAnchorForCommentsOnly({
             accessibilityLabel={href}
             wrapperStyle={wrapperStyle}
         >
-            <Tooltip text={linkHref}>
+            <Tooltip text={linkHref} shouldRender={!isPressed}>
                 <Text
                     ref={linkRef}
                     style={StyleSheet.flatten([style, defaultTextStyle])}
