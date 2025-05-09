@@ -73,6 +73,8 @@ function WalletPage({shouldListenForResize = false}: WalletPageProps) {
     const {translate} = useLocalize();
     const network = useNetwork();
     const {windowWidth} = useWindowDimensions();
+    const windowWidthRef = useRef<number>(0);
+    windowWidthRef.current = windowWidth;
     const {shouldUseNarrowLayout} = useResponsiveLayout();
     const {paymentMethod, setPaymentMethod, resetSelectedPaymentMethodData} = usePaymentMethodState();
     const [shouldShowAddPaymentMenu, setShouldShowAddPaymentMenu] = useState(false);
@@ -119,11 +121,11 @@ function WalletPage({shouldListenForResize = false}: WalletPageProps) {
         setAnchorPosition({
             anchorPositionTop: position.top + position.height - variables.bankAccountActionPopoverTopSpacing,
             // We want the position to be 23px to the right of the left border
-            anchorPositionRight: windowWidth - position.right + variables.bankAccountActionPopoverRightSpacing,
+            anchorPositionRight: windowWidthRef.current - position.right + variables.bankAccountActionPopoverRightSpacing,
             anchorPositionHorizontal: position.x + variables.addBankAccountLeftSpacing,
             anchorPositionVertical: position.y,
         });
-    }, [windowWidth]);
+    }, []);
 
     const getSelectedPaymentMethodID = useCallback(() => {
         if (paymentMethod.selectedPaymentMethodType === CONST.PAYMENT_METHODS.PERSONAL_BANK_ACCOUNT) {
@@ -322,10 +324,13 @@ function WalletPage({shouldListenForResize = false}: WalletPageProps) {
         if (!shouldListenForResize) {
             return;
         }
-        const popoverPositionListener = Dimensions.addEventListener('change', () => {
+        const popoverPositionListener = Dimensions.addEventListener('change', ({window}) => {
             if (!shouldShowAddPaymentMenu && !shouldShowDefaultDeleteMenu && !shouldShowCardMenu) {
                 return;
             }
+
+            windowWidthRef.current = window.width;
+
             if (shouldShowAddPaymentMenu) {
                 debounce(setMenuPosition, CONST.TIMING.RESIZE_DEBOUNCE_TIME)();
                 return;
@@ -338,7 +343,7 @@ function WalletPage({shouldListenForResize = false}: WalletPageProps) {
             }
             popoverPositionListener.remove();
         };
-    }, [shouldShowAddPaymentMenu, shouldShowDefaultDeleteMenu, shouldShowCardMenu, setMenuPosition, shouldListenForResize]);
+    }, [shouldShowAddPaymentMenu, shouldShowDefaultDeleteMenu, shouldShowCardMenu, shouldListenForResize]);
 
     useEffect(() => {
         if (!shouldShowDefaultDeleteMenu) {
