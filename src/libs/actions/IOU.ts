@@ -10713,14 +10713,17 @@ function getSearchOnyxUpdate({participant, transaction}: GetSearchOnyxUpdatePara
             currentSearchQueryJSON.status === CONST.SEARCH.STATUS.EXPENSE.ALL && validSearchTypes.includes(currentSearchQueryJSON.type) && currentSearchQueryJSON.flatFilters.length === 0;
 
         if (shouldOptimisticallyUpdate) {
+            //Making diff from original, preventing be deleted immediately after the request is successful.
+            //The added data will be replaced after the Search API request.
+            const modifiedToAccountID = toAccountID * 1000;
             return {
                 onyxMethod: Onyx.METHOD.MERGE,
                 key: `${ONYXKEYS.COLLECTION.SNAPSHOT}${currentSearchQueryJSON.hash}` as const,
                 value: {
                     data: {
                         [ONYXKEYS.PERSONAL_DETAILS_LIST]: {
-                            [toAccountID]: {
-                                accountID: toAccountID,
+                            [modifiedToAccountID]: {
+                                accountID: modifiedToAccountID,
                                 displayName: participant?.displayName,
                                 login: participant?.login,
                             },
@@ -10733,7 +10736,7 @@ function getSearchOnyxUpdate({participant, transaction}: GetSearchOnyxUpdatePara
                         },
                         [`${ONYXKEYS.COLLECTION.TRANSACTION}${transaction.transactionID}`]: {
                             accountID: fromAccountID,
-                            managerID: toAccountID,
+                            managerID: modifiedToAccountID,
                             ...transaction,
                         },
                     },
