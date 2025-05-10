@@ -636,6 +636,12 @@ function ComposerWithSuggestions(
             addKeyDownPressListener(focusComposerOnKeyPress);
             // The report isn't unmounted and can be focused again after going back from another report so we should update the composerRef again
             ReportActionComposeFocusManager.composerRef.current = textInputRef.current;
+            if(ReportActionComposeFocusManager.shouldBlockFocusRef.current){
+                InteractionManager.runAfterInteractions(()=>{
+                    textInputRef.current?.focus();
+                });
+                ReportActionComposeFocusManager.shouldBlockFocusRef.current = false;
+            }
             setUpComposeFocusManager();
         });
         addKeyDownPressListener(focusComposerOnKeyPress);
@@ -804,6 +810,10 @@ function ComposerWithSuggestions(
                     style={[styles.textInputCompose, isComposerFullSize ? styles.textInputFullCompose : styles.textInputCollapseCompose]}
                     maxLines={maxComposerLines}
                     onFocus={() => {
+                        if(!!ReportActionComposeFocusManager.shouldBlockFocusRef.current){
+                            textInputRef.current?.blur();
+                            return;
+                        }
                         // The last composer that had focus should re-gain focus
                         setUpComposeFocusManager(true);
                         onFocus();

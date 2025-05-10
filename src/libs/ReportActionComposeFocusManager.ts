@@ -18,6 +18,9 @@ const editComposerRef: MutableRefObject<TextInput | null> = React.createRef<Text
 let priorityFocusCallback: FocusCallback | null = null;
 let focusCallback: FocusCallback | null = null;
 
+//Boolean value to prevent the composer from being re-focused after the modal is closed.
+const shouldBlockFocusRef: MutableRefObject<boolean | null> = React.createRef<boolean>();
+
 /**
  * Register a callback to be called when focus is requested.
  * Typical uses of this would be call the focus on the ReportActionComposer.
@@ -91,4 +94,5 @@ export default {
     isFocused,
     editComposerRef,
     isEditFocused,
+    shouldBlockFocusRef
 };
