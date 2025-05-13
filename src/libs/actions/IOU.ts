@@ -615,6 +615,7 @@ type ReplaceReceipt = {
 type GetSearchOnyxUpdateParams = {
     transaction: OnyxTypes.Transaction;
     participant?: Participant;
+    shouldModifyAccountID?: boolean;
 };
 
 let allTransactions: NonNullable<OnyxCollection<OnyxTypes.Transaction>> = {};
@@ -1773,6 +1774,7 @@ function buildOnyxDataForMoneyRequest(moneyRequestParams: BuildOnyxDataForMoneyR
     const searchUpdate = getSearchOnyxUpdate({
         transaction,
         participant,
+        shouldModifyAccountID: !isEmptyObject(personalDetailListAction)
     });
 
     if (searchUpdate) {
@@ -2198,6 +2200,7 @@ function buildOnyxDataForInvoice(invoiceParams: BuildOnyxDataForInvoiceParams): 
     const searchUpdate = getSearchOnyxUpdate({
         transaction,
         participant,
+        shouldModifyAccountID: !isEmptyObject(optimisticDataParams.personalDetailListAction)
     });
 
     if (searchUpdate) {
@@ -10702,7 +10705,7 @@ function resolveDuplicates(params: MergeDuplicatesParams) {
     API.write(WRITE_COMMANDS.RESOLVE_DUPLICATES, parameters, {optimisticData, failureData});
 }
 
-function getSearchOnyxUpdate({participant, transaction}: GetSearchOnyxUpdateParams) {
+function getSearchOnyxUpdate({participant, transaction, shouldModifyAccountID}: GetSearchOnyxUpdateParams) {
     const toAccountID = participant?.accountID;
     const fromAccountID = currentUserPersonalDetails?.accountID;
     const currentSearchQueryJSON = getCurrentSearchQueryJSON();
@@ -10715,7 +10718,7 @@ function getSearchOnyxUpdate({participant, transaction}: GetSearchOnyxUpdatePara
         if (shouldOptimisticallyUpdate) {
             //Making diff from original, preventing be deleted immediately after the request is successful.
             //The added data will be replaced after the Search API request.
-            const modifiedToAccountID = toAccountID * 1000;
+            const modifiedToAccountID = shouldModifyAccountID ? toAccountID * 1000 : toAccountID;
             return {
                 onyxMethod: Onyx.METHOD.MERGE,
                 key: `${ONYXKEYS.COLLECTION.SNAPSHOT}${currentSearchQueryJSON.hash}` as const,
