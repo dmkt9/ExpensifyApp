@@ -37,6 +37,8 @@ function BaseOverlay({onPress, isModalOnTheLeft = false}: BaseOverlayProps) {
                     role={CONST.ROLE.BUTTON}
                     id={CONST.OVERLAY.TOP_BUTTON_NATIVE_ID}
                     tabIndex={-1}
+                    onMouseDown={(event)=>event.preventDefault()}
+                    onMouseUp={(event)=>event.preventDefault()}
                 />
                 <PressableWithoutFeedback
                     style={[styles.flex1, styles.boxShadowNone]}
@@ -46,6 +48,8 @@ function BaseOverlay({onPress, isModalOnTheLeft = false}: BaseOverlayProps) {
                     noDragArea
                     id={CONST.OVERLAY.BOTTOM_BUTTON_NATIVE_ID}
                     tabIndex={-1}
+                    onMouseDown={(event)=>event.preventDefault()}
+                    onMouseUp={(event)=>event.preventDefault()}
                 />
             </View>
         </Animated.View>
