@@ -7,6 +7,7 @@ import {isSelfDM} from '@libs/ReportUtils';
 import ONYXKEYS from '@src/ONYXKEYS';
 import type {PersonalDetails, Report} from '@src/types/onyx';
 import {usePersonalDetails} from './OnyxProvider';
+import {isEmptyObject} from '@src/types/utils/EmptyObject';
 
 type OptionsListContextProps = {
     /** List of options for reports and personal details */
@@ -52,6 +53,21 @@ function OptionsListContextProvider({children}: OptionsListProviderProps) {
     const personalDetails = usePersonalDetails();
     const prevPersonalDetails = usePrevious(personalDetails);
     const hasInitialData = useMemo(() => Object.keys(personalDetails ?? {}).length > 0, [personalDetails]);
+    const preReports = usePrevious(reports);
+    const newReports = useMemo(()=>{
+        if(!reports || !preReports){
+            return;
+        }
+
+        const newData: Record<string, Report | undefined> = {};
+        Object.keys(reports ?? {}).forEach(key=>{
+            if(key in preReports){
+                return;
+            }
+            newData[key] = reports[key];
+        })
+        return isEmptyObject(newData) ? undefined : newData;
+    }, [reports, preReports])
 
     const loadOptions = useCallback(() => {
         const optionLists = createOptionList(personalDetails, reports);
@@ -88,19 +104,20 @@ function OptionsListContextProvider({children}: OptionsListProviderProps) {
      * This effect is responsible for updating the options only for changed reports
      */
     useEffect(() => {
-        if (!changedReports || !areOptionsInitialized.current) {
+        if ((!changedReports && !newReports) || !areOptionsInitialized.current) {
             return;
         }
 
         setOptions((prevOptions) => {
-            const changedReportKeys = Object.keys(changedReports);
+            const reportsToProcess = {...newReports, ...changedReports}
+            const changedReportKeys = Object.keys(reportsToProcess);
             if (changedReportKeys.length === 0) {
                 return prevOptions;
             }
 
             const updatedReportsMap = new Map(prevOptions.reports.map((report) => [report.reportID, report]));
             changedReportKeys.forEach((reportKey) => {
-                const report = changedReports[reportKey];
+                const report = reportsToProcess[reportKey];
                 const reportID = reportKey.replace(ONYXKEYS.COLLECTION.REPORT, '');
                 const {reportOption} = processReport(report, personalDetails);
 
@@ -116,7 +133,7 @@ function OptionsListContextProvider({children}: OptionsListProviderProps) {
                 reports: Array.from(updatedReportsMap.values()),
             };
         });
-    }, [changedReports, personalDetails]);
+    }, [changedReports, personalDetails, newReports]);
 
     /**
      * This effect is used to update the options list when personal details change.
