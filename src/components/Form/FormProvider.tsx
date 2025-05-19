@@ -119,6 +119,7 @@ function FormProvider(
     const [errors, setErrors] = useState<GenericFormInputErrors>({});
     const hasServerError = useMemo(() => !!formState && !isEmptyObject(formState?.errors), [formState]);
     const {setIsBlurred} = useInputBlurContext();
+    const lastInputIDFocusedRef = useRef<string>();
 
     const onValidate = useCallback(
         (values: FormOnyxValues, shouldClearServerError = true) => {
@@ -224,7 +225,14 @@ function FormProvider(
             Object.keys(inputRefs.current).forEach((inputID) => (touchedInputs.current[inputID] = true));
 
             // Validate form and return early if any errors are found
-            if (!isEmptyObject(onValidate(trimmedStringValues))) {
+            const validateErrors = onValidate(trimmedStringValues);
+            if (!isEmptyObject(validateErrors)) {
+                const lastInputID = lastInputIDFocusedRef.current;
+                if(lastInputID && lastInputID in validateErrors) {
+                    setTimeout(()=>{
+                        inputRefs.current[lastInputID]?.current?.focus?.();
+                    }, VALIDATE_DELAY);
+                }
                 return;
             }
 
@@ -370,6 +378,9 @@ function FormProvider(
                     }
                     inputProps.onPressOut?.(event);
                 },
+                onFocus: ()=>{
+                    lastInputIDFocusedRef.current = inputID;
+                },
                 onBlur: (event) => {
                     // Only run validation when user proactively blurs the input.
                     if (Visibility.isVisible() && Visibility.hasFocus()) {
@@ -387,6 +398,7 @@ function FormProvider(
                             ) {
                                 return;
                             }
+                            lastInputIDFocusedRef.current = undefined;
                             setTouchedInput(inputID);
                             // We don't validate the form on blur in case the current screen is not focused
                             if (shouldValidateOnBlur && isFocusedRef.current) {
