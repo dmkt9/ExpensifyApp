@@ -18,7 +18,13 @@ const navigateAfterOnboarding = (
     Navigation.dismissModal();
 
     if (onboardingPurposeSelected === CONST.ONBOARDING_CHOICES.MANAGE_TEAM) {
-        InteractionManager.runAfterInteractions(() => Navigation.navigate(ROUTES.TEST_DRIVE_MODAL_ROOT));
+        InteractionManager.runAfterInteractions(() => {
+            // If possible, always navigate to #admins chat on a large screen first.
+            if (!isSmallScreenWidth && onboardingAdminsChatReportID && !shouldPreventOpenAdminRoom) {
+                Navigation.navigate(ROUTES.REPORT_WITH_ID.getRoute(onboardingAdminsChatReportID));
+            }
+            Navigation.navigate(ROUTES.TEST_DRIVE_MODAL_ROOT);
+        });
         return;
     }
 
