@@ -349,4 +349,4 @@ function getTransactionThreadPrimaryAction(
     return '';
 }
 
-export {getReportPrimaryAction, getTransactionThreadPrimaryAction, isAddExpenseAction};
+export {getReportPrimaryAction, getTransactionThreadPrimaryAction, isAddExpenseAction, isSubmitAction};
