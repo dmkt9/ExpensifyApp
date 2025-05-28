@@ -48,7 +48,12 @@ function OptionsListContextProvider({children}: OptionsListProviderProps) {
     });
     const [reportAttributes] = useOnyx(ONYXKEYS.DERIVED.REPORT_ATTRIBUTES, {canBeMissing: true});
     const prevReportAttributesLocale = usePrevious(reportAttributes?.locale);
-    const [reports, {sourceValue: changedReports}] = useOnyx(ONYXKEYS.COLLECTION.REPORT, {canBeMissing: true});
+    const batchingRef = useRef<() => void>();
+    const [reports, {sourceValue: changedReports}] = useOnyx(ONYXKEYS.COLLECTION.REPORT, {canBeMissing: true, batching: batchingRef} as any) as [
+        Record<string, Report>,
+        {sourceValue: any[]},
+    ];
+    batchingRef.current?.();
     const [, {sourceValue: changedReportActions}] = useOnyx(ONYXKEYS.COLLECTION.REPORT_ACTIONS, {canBeMissing: true});
     const personalDetails = usePersonalDetails();
     const prevPersonalDetails = usePrevious(personalDetails);
@@ -92,16 +97,16 @@ function OptionsListContextProvider({children}: OptionsListProviderProps) {
         if (!changedReports || !areOptionsInitialized.current) {
             return;
         }
-
+        const changedReportsObj = changedReports.reduce((obj, report) => ({...obj, ...report}), {});
         setOptions((prevOptions) => {
-            const changedReportKeys = Object.keys(changedReports);
+            const changedReportKeys = Object.keys(changedReportsObj);
             if (changedReportKeys.length === 0) {
                 return prevOptions;
             }
 
             const updatedReportsMap = new Map(prevOptions.reports.map((report) => [report.reportID, report]));
             changedReportKeys.forEach((reportKey) => {
-                const report = changedReports[reportKey];
+                const report = changedReportsObj[reportKey];
                 const reportID = reportKey.replace(ONYXKEYS.COLLECTION.REPORT, '');
                 const {reportOption} = processReport(report, personalDetails);
 
