@@ -4045,12 +4045,6 @@ const changeMoneyRequestHoldStatus = (reportAction: OnyxEntry<ReportAction>): vo
     if (!isMoneyRequestAction(reportAction)) {
         return;
     }
-    const moneyRequestReportID = getOriginalMessage(reportAction)?.IOUReportID;
-
-    const moneyRequestReport = getReportOrDraftReport(String(moneyRequestReportID));
-    if (!moneyRequestReportID || !moneyRequestReport) {
-        return;
-    }
 
     const transactionID = getOriginalMessage(reportAction)?.IOUTransactionID;
 
@@ -4061,11 +4055,19 @@ const changeMoneyRequestHoldStatus = (reportAction: OnyxEntry<ReportAction>): vo
 
     const transaction = allTransactions?.[`${ONYXKEYS.COLLECTION.TRANSACTION}${transactionID}`] ?? ({} as Transaction);
     const isOnHold = isOnHoldTransactionUtils(transaction);
-    const policy = allPolicies?.[`${ONYXKEYS.COLLECTION.POLICY}${moneyRequestReport.policyID}`] ?? null;
 
     if (isOnHold) {
         unholdRequest(transactionID, reportAction.childReportID);
     } else {
+        const moneyRequestReportID = getOriginalMessage(reportAction)?.IOUReportID;
+
+        const moneyRequestReport = getReportOrDraftReport(String(moneyRequestReportID));
+        if (!moneyRequestReportID || !moneyRequestReport) {
+            return;
+        }
+        
+        const policy = allPolicies?.[`${ONYXKEYS.COLLECTION.POLICY}${moneyRequestReport.policyID}`] ?? null;
+
         const activeRoute = encodeURIComponent(Navigation.getActiveRoute());
         Navigation.navigate(ROUTES.MONEY_REQUEST_HOLD_REASON.getRoute(policy?.type ?? CONST.POLICY.TYPE.PERSONAL, transactionID, reportAction.childReportID, activeRoute));
     }
