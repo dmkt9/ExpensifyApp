@@ -27,6 +27,8 @@ type DropdownButtonProps = {
 
     /** The component to render in the popover */
     PopoverComponent: React.FC<PopoverComponentProps>;
+
+    onToggleVisible?: (isVisible: boolean) => void;
 };
 
 const PADDING_MODAL = 8;
@@ -36,7 +38,7 @@ const ANCHOR_ORIGIN = {
     vertical: CONST.MODAL.ANCHOR_ORIGIN_VERTICAL.TOP,
 };
 
-function DropdownButton({label, value, viewportOffsetTop, PopoverComponent}: DropdownButtonProps) {
+function DropdownButton({label, value, viewportOffsetTop, PopoverComponent, onToggleVisible}: DropdownButtonProps) {
     // We need to use isSmallScreenWidth instead of shouldUseNarrowLayout to distinguish RHL and narrow layout
     // eslint-disable-next-line rulesdir/prefer-shouldUseNarrowLayout-instead-of-isSmallScreenWidth
     const {isSmallScreenWidth} = useResponsiveLayout();
@@ -64,6 +66,7 @@ function DropdownButton({label, value, viewportOffsetTop, PopoverComponent}: Dro
                 });
             });
 
+            onToggleVisible?.(!previousValue);
             return !previousValue;
         });
     };

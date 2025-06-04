@@ -289,26 +289,53 @@ function SearchFiltersBar({queryJSON, headerButtonsOptions}: SearchFiltersBarPro
         ].filter(Boolean) as string[];
         const fromValue = filterFormValues.from?.map((accountID) => personalDetails?.[accountID]?.displayName ?? accountID) ?? [];
 
+        const allVisibleStateAndCloseOverlay: Record<string, {isVisible: boolean; closeOverlay: () => void}> = {};
+        const PopoverComponentWrapper = (id: string, component: ({closeOverlay}: PopoverComponentProps) => React.JSX.Element) => {
+            return ({closeOverlay}: PopoverComponentProps) => {
+                allVisibleStateAndCloseOverlay[id] = {...(allVisibleStateAndCloseOverlay[id] ?? {isVisible: false}), closeOverlay};
+                return component({closeOverlay});
+            };
+        };
+
+        const onToggleVisibleWrapper = (id: string) => {
+            return (isVisible: boolean) => {
+                if (isVisible) {
+                    Object.entries(allVisibleStateAndCloseOverlay).forEach(([idKey, {isVisible: visibleState, closeOverlay}]) => {
+                        if (id === idKey || !visibleState) {
+                            return;
+                        }
+                        
+                        closeOverlay();
+                    });
+                }
+                allVisibleStateAndCloseOverlay[id].isVisible = isVisible;
+            };
+        };
+
         const filterList = [
             {
                 label: translate('common.type'),
-                PopoverComponent: typeComponent,
+                PopoverComponent: PopoverComponentWrapper('common.type', typeComponent),
                 value: typeValue?.translation ? translate(typeValue.translation) : null,
+                onToggleVisible: onToggleVisibleWrapper('common.type'),
             },
             {
                 label: translate('common.status'),
-                PopoverComponent: statusComponent,
+                PopoverComponent: PopoverComponentWrapper('common.status', statusComponent),
                 value: statusValue.map((option) => translate(option.translation)),
+                onToggleVisible: onToggleVisibleWrapper('common.status'),
             },
             {
                 label: translate('common.date'),
-                PopoverComponent: datePickerComponent,
+                PopoverComponent: PopoverComponentWrapper('common.date', datePickerComponent),
                 value: dateValue,
+                onToggleVisible: onToggleVisibleWrapper('common.date'),
             },
             {
                 label: translate('common.from'),
-                PopoverComponent: userPickerComponent,
+                PopoverComponent: PopoverComponentWrapper('common.from', userPickerComponent),
                 value: fromValue,
+                onToggleVisible: onToggleVisibleWrapper('common.from'),
             },
         ];
 
@@ -382,6 +409,7 @@ function SearchFiltersBar({queryJSON, headerButtonsOptions}: SearchFiltersBarPro
                             label={filter.label}
                             value={filter.value}
                             PopoverComponent={filter.PopoverComponent}
+                            onToggleVisible={filter.onToggleVisible}
                         />
                     ))}
 
