@@ -6,14 +6,19 @@ import {DotIndicator} from '@components/Icon/Expensicons';
 import type {LocaleContextProps} from '@components/LocaleContextProvider';
 import RenderHTML from '@components/RenderHTML';
 import useLocalize from '@hooks/useLocalize';
+import useOnyx from '@hooks/useOnyx';
 import usePaginatedReportActions from '@hooks/usePaginatedReportActions';
 import useTheme from '@hooks/useTheme';
 import useThemeStyles from '@hooks/useThemeStyles';
 import useTransactionViolations from '@hooks/useTransactionViolations';
 import {isReceiptError} from '@libs/ErrorUtils';
 import {getIOUActionForTransactionID} from '@libs/ReportActionsUtils';
+import {isSettled} from '@libs/ReportUtils';
+import {hasMissingSmartscanFields, isAmountMissing, isMerchantMissing} from '@libs/TransactionUtils';
 import ViolationsUtils from '@libs/Violations/ViolationsUtils';
 import variables from '@styles/variables';
+import ONYXKEYS from '@src/ONYXKEYS';
+import type * as OnyxTypes from '@src/types/onyx';
 import type {Errors} from '@src/types/onyx/OnyxCommon';
 import type ReportAction from '@src/types/onyx/ReportAction';
 import type Transaction from '@src/types/onyx/Transaction';
@@ -64,11 +69,47 @@ const extractErrorMessages = (errors: Errors | ReceiptErrors, errorActions: Repo
     return Array.from(uniqueMessages);
 };
 
+function getTransactionViolationsMessage(
+    transactionViolations: OnyxTypes.TransactionViolations,
+    transaction: OnyxTypes.Transaction,
+    iouReport: OnyxTypes.Report | undefined,
+    translate: LocaleContextProps['translate'],
+) {
+    const isMoneyRequestSettled = isSettled(iouReport?.reportID);
+    const isSettlementOrApprovalPartial = !!iouReport?.pendingFields?.partial;
+    const shouldShowHoldMessage = !(isMoneyRequestSettled && !isSettlementOrApprovalPartial) && !!transaction?.comment?.hold;
+    const hasFieldErrors = hasMissingSmartscanFields(transaction);
+
+    let RBRMessages = transactionViolations.map((violation) => {
+        const message = ViolationsUtils.getViolationTranslation(violation, translate);
+        return message.endsWith('.') || transactionViolations.length === 1 ? message : `${message}.`;
+    });
+
+    if (shouldShowHoldMessage && RBRMessages.length === 0) {
+        RBRMessages = [translate('iou.expenseWasPutOnHold')];
+    }
+
+    if (hasFieldErrors && RBRMessages.length === 0) {
+        const merchantMissing = isMerchantMissing(transaction);
+        const amountMissing = isAmountMissing(transaction);
+        if (amountMissing && merchantMissing) {
+            RBRMessages = [translate('violations.reviewRequired')];
+        } else if (amountMissing) {
+            RBRMessages = [translate('iou.missingAmount')];
+        } else if (merchantMissing) {
+            RBRMessages = [translate('iou.missingMerchant')];
+        }
+    }
+
+    return RBRMessages;
+}
+
 function TransactionItemRowRBR({transaction, containerStyles}: TransactionItemRowRBRProps) {
     const styles = useThemeStyles();
     const transactionViolations = useTransactionViolations(transaction?.transactionID);
     const {translate} = useLocalize();
     const theme = useTheme();
+    const [iouReport] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT}${transaction.reportID}`, {canBeMissing: true});
 
     const {sortedAllReportActions: transactionActions} = usePaginatedReportActions(transaction.reportID);
     const transactionThreadId = transactionActions ? getIOUActionForTransactionID(transactionActions, transaction.transactionID)?.childReportID : undefined;
@@ -85,10 +126,7 @@ function TransactionItemRowRBR({transaction, containerStyles}: TransactionItemRo
         ),
         // Some violations end with a period already so lets make sure the connected messages have only single period between them
         // and end with a single dot.
-        ...transactionViolations.map((violation) => {
-            const message = ViolationsUtils.getViolationTranslation(violation, translate);
-            return message.endsWith('.') || transactionViolations.length === 1 ? message : `${message}.`;
-        }),
+        ...getTransactionViolationsMessage(transactionViolations, transaction, iouReport, translate),
     ].join(' ');
     return (
         RBRMessages.length > 0 && (
