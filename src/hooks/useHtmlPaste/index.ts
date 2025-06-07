@@ -155,7 +155,7 @@ const useHtmlPaste: UseHtmlPaste = (textInputRef, preHtmlPasteCallback, isActive
                     handlePastePlainText(event);
                     return;
                 }
-                handlePastedHTML(pastedHTML);
+                handlePastedHTML(pastedHTML.replaceAll(/(<style\b[^>]*>[\s\S]*?<\/style>)|(style\s*=\s*(["']).*?\3)/g, ""));
                 return;
             }
             handlePastePlainText(event);
