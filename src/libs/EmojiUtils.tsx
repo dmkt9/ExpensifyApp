@@ -340,52 +340,91 @@ function replaceEmojis(text: string, preferredSkinTone: OnyxEntry<number | strin
     }
 
     let newText = text;
-    const emojis: Emoji[] = [];
-    const emojiData = text.match(CONST.REGEX.EMOJI_NAME);
-    if (!emojiData || emojiData.length === 0) {
-        return {text: newText, emojis};
-    }
-
+    let emojis: Emoji[] = [];
     let cursorPosition;
+    const splitByBackticks = newText.split('`');
+    if (splitByBackticks.length > 2) {
+        let cursorPositionWithIndex: number[] | undefined;
+        // There exists a pair of ``
+        for (let i = 0; i < splitByBackticks.length; i++) {
+            const particalText = splitByBackticks.at(i) ?? '';
+            if (particalText.trim() !== '') {
+                if (i % 2 === 0) {
+                    // Outside the valid `` pair. Parse and replace with Emoji
+                    const {text: parsedText, emojis: emojisPartical, cursorPosition: cursorPositionPartical} = replaceEmojis(particalText, preferredSkinTone, lang);
+                    splitByBackticks[i] = parsedText;
+                    emojis = emojis.concat(emojisPartical);
+                    if (cursorPositionPartical && cursorPositionPartical > 0) {
+                        cursorPositionWithIndex = [i, cursorPositionPartical];
+                    }
+                } else {
+                    // Inside the valid `` pair. Parse and replace with markdown
+                    const textWithEmoji = splitTextWithEmojis(particalText);
+                    if (textWithEmoji.length > 0) {
+                        splitByBackticks[i] = textWithEmoji.reduce((val, withEmoji) => {
+                            if (!withEmoji.isEmoji) {
+                                return val + withEmoji.text;
+                            }
 
-    for (const emoji of emojiData) {
-        const name = emoji.slice(1, -1);
-        let checkEmoji = trie.search(name);
-        // If the user has selected a language other than English, and the emoji doesn't exist in that language,
-        // we will check if the emoji exists in English.
-        if (lang !== CONST.LOCALES.DEFAULT && !checkEmoji?.metaData?.code) {
-            const englishTrie = emojisTrie[CONST.LOCALES.DEFAULT];
-            if (englishTrie) {
-                const englishEmoji = englishTrie.search(name);
-                checkEmoji = englishEmoji;
+                            return `${val}:${Emojis.emojiCodeTableWithSkinTones[withEmoji.text].name}:`;
+                        }, '');
+                    }
+                }
             }
         }
-        if (checkEmoji?.metaData?.code && checkEmoji?.metaData?.name) {
-            const emojiReplacement = getEmojiCodeWithSkinColor(checkEmoji.metaData as Emoji, preferredSkinTone);
-            emojis.push({
-                name,
-                code: checkEmoji.metaData?.code,
-                types: checkEmoji.metaData.types,
-            });
 
-            // Set the cursor to the end of the last replaced Emoji. Note that we position after
-            // the extra space, if we added one.
-            cursorPosition = newText.indexOf(emoji) + (emojiReplacement?.length ?? 0);
-
-            newText = newText.replace(emoji, emojiReplacement ?? '');
+        // Calculate cursorPosition
+        if (cursorPositionWithIndex) {
+            const [i, position] = cursorPositionWithIndex;
+            cursorPosition = splitByBackticks.slice(0, i).join('`').length + position;
         }
-    }
 
-    // cursorPosition, when not undefined, points to the end of the last emoji that was replaced.
-    // In that case we want to append a space at the cursor position, but only if the next character
-    // is not already a space (to avoid double spaces).
-    if (cursorPosition && cursorPosition > 0) {
-        const space = ' ';
-
-        if (newText.charAt(cursorPosition) !== space) {
-            newText = newText.slice(0, cursorPosition) + space + newText.slice(cursorPosition);
+        newText = splitByBackticks.join('`');
+    } else {
+        const emojiData = text.match(CONST.REGEX.EMOJI_NAME);
+        if (!emojiData || emojiData.length === 0) {
+            return {text: newText, emojis};
         }
-        cursorPosition += space.length;
+
+        for (const emoji of emojiData) {
+            const name = emoji.slice(1, -1);
+            let checkEmoji = trie.search(name);
+            // If the user has selected a language other than English, and the emoji doesn't exist in that language,
+            // we will check if the emoji exists in English.
+            if (lang !== CONST.LOCALES.DEFAULT && !checkEmoji?.metaData?.code) {
+                const englishTrie = emojisTrie[CONST.LOCALES.DEFAULT];
+                if (englishTrie) {
+                    const englishEmoji = englishTrie.search(name);
+                    checkEmoji = englishEmoji;
+                }
+            }
+            if (checkEmoji?.metaData?.code && checkEmoji?.metaData?.name) {
+                const emojiReplacement = getEmojiCodeWithSkinColor(checkEmoji.metaData as Emoji, preferredSkinTone);
+                emojis.push({
+                    name,
+                    code: checkEmoji.metaData?.code,
+                    types: checkEmoji.metaData.types,
+                });
+
+                // Set the cursor to the end of the last replaced Emoji. Note that we position after
+                // the extra space, if we added one.
+                cursorPosition = newText.indexOf(emoji) + (emojiReplacement?.length ?? 0);
+
+                newText = newText.replace(emoji, emojiReplacement ?? '');
+            }
+        }
+
+        // cursorPosition, when not undefined, points to the end of the last emoji that was replaced.
+        // In that case we want to append a space at the cursor position, but only if the next character
+        // is not already a space (to avoid double spaces).
+        if (cursorPosition && cursorPosition > 0) {
+            const space = ' ';
+
+            if (newText.charAt(cursorPosition) !== space) {
+                newText = newText.slice(0, cursorPosition) + space + newText.slice(cursorPosition);
+            }
+            cursorPosition += space.length;
+        }
     }
 
     return {text: newText, emojis, cursorPosition};
