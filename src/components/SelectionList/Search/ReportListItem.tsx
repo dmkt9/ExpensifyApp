@@ -12,6 +12,8 @@ import useResponsiveLayout from '@hooks/useResponsiveLayout';
 import useTheme from '@hooks/useTheme';
 import useThemeStyles from '@hooks/useThemeStyles';
 import Navigation from '@libs/Navigation/Navigation';
+import {isOffline} from '@libs/Network/NetworkStore';
+import {getReportOfflinePendingActionAndErrors} from '@libs/ReportUtils';
 import variables from '@styles/variables';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -95,6 +97,10 @@ function ReportListItem<TItem extends ListItem>({
         COLUMNS.TOTAL_AMOUNT,
         COLUMNS.ACTION,
     ] satisfies Array<ValueOf<typeof COLUMNS>>;
+
+    if (getReportOfflinePendingActionAndErrors(reportItem).reportPendingAction === CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE && !isOffline()) {
+        return null;
+    }
 
     return (
         <BaseListItem

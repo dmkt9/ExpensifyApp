@@ -22,7 +22,7 @@ import Log from '@libs/Log';
 import isSearchTopmostFullScreenRoute from '@libs/Navigation/helpers/isSearchTopmostFullScreenRoute';
 import type {PlatformStackNavigationProp} from '@libs/Navigation/PlatformStackNavigation/types';
 import {getIOUActionForTransactionID} from '@libs/ReportActionsUtils';
-import {canEditFieldOfMoneyRequest, generateReportID} from '@libs/ReportUtils';
+import {canEditFieldOfMoneyRequest, generateReportID, getReportOfflinePendingActionAndErrors} from '@libs/ReportUtils';
 import {buildSearchQueryString} from '@libs/SearchQueryUtils';
 import {
     getListItem,
@@ -518,14 +518,16 @@ function Search({queryJSON, currentSearchResults, lastNonEmptySearchResults, onS
         );
     }
 
-    if (shouldShowEmptyState(isDataLoaded, data.length, searchResults.search.type)) {
+    const isAllReportPendingDelete = !isOffline && data.every((report) => getReportOfflinePendingActionAndErrors(report).reportPendingAction === CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE);
+
+    if (shouldShowEmptyState(isDataLoaded, data.length, searchResults.search.type) || isAllReportPendingDelete) {
         return (
             <View style={[shouldUseNarrowLayout ? styles.searchListContentContainerStyles : styles.mt3, styles.flex1]}>
                 <EmptySearchView
                     hash={hash}
                     type={type}
                     groupBy={groupBy}
-                    hasResults={searchResults.search.hasResults}
+                    hasResults={searchResults.search.hasResults && !isAllReportPendingDelete}
                 />
             </View>
         );
