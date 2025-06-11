@@ -24,6 +24,7 @@ import {completeOnboarding} from '@userActions/Report';
 import {setOnboardingAdminsChatReportID, setOnboardingPolicyID} from '@userActions/Welcome';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
+import type {Route} from '@src/ROUTES';
 import ROUTES from '@src/ROUTES';
 import type {JoinablePolicy} from '@src/types/onyx/JoinablePolicies';
 import type {BaseOnboardingWorkspacesProps} from './types';
@@ -48,6 +49,8 @@ function BaseOnboardingWorkspaces({route, shouldUseNativeStyles}: BaseOnboarding
     const isValidated = isCurrentUserValidated(loginList);
 
     const {isBetaEnabled} = usePermissions();
+
+    const [onboardingValues] = useOnyx(ONYXKEYS.NVP_ONBOARDING, {canBeMissing: true});
 
     const handleJoinWorkspace = useCallback(
         (policy: JoinablePolicy) => {
@@ -150,7 +153,15 @@ function BaseOnboardingWorkspaces({route, shouldUseNativeStyles}: BaseOnboarding
                         large
                         text={translate('common.skip')}
                         onPress={() => {
-                            Navigation.navigate(ROUTES.ONBOARDING_PURPOSE.getRoute(route.params?.backTo));
+                            let nextRoute: {route: string; getRoute: (backTo?: string) => Route} = ROUTES.ONBOARDING_PURPOSE;
+                            const isVsb = onboardingValues?.signupQualifier === CONST.ONBOARDING_SIGNUP_QUALIFIERS.VSB;
+                            const isSmb = onboardingValues?.signupQualifier === CONST.ONBOARDING_SIGNUP_QUALIFIERS.SMB;
+                            if (isSmb) {
+                                nextRoute = ROUTES.ONBOARDING_EMPLOYEES;
+                            } else if (isVsb) {
+                                nextRoute = ROUTES.ONBOARDING_ACCOUNTING;
+                            }
+                            Navigation.navigate(nextRoute.getRoute(route.params?.backTo));
                         }}
                         style={[styles.mt5]}
                     />

@@ -80,15 +80,8 @@ function getOnboardingInitialPath(getOnboardingInitialPathParams: GetOnboardingI
         return `/${ROUTES.ONBOARDING_WORK_EMAIL.route}`;
     }
 
-    if (!isUserFromPublicDomain && hasAccessiblePolicies) {
+    if ((!isUserFromPublicDomain && hasAccessiblePolicies) || isVsb || isSmb) {
         return `/${ROUTES.ONBOARDING_PERSONAL_DETAILS.route}`;
-    }
-
-    if (isVsb) {
-        return `/${ROUTES.ONBOARDING_ACCOUNTING.route}`;
-    }
-    if (isSmb) {
-        return `/${ROUTES.ONBOARDING_EMPLOYEES.route}`;
     }
 
     if (state?.routes?.at(-1)?.name !== NAVIGATORS.ONBOARDING_MODAL_NAVIGATOR) {
