@@ -17,6 +17,7 @@ import useLocalize from '@hooks/useLocalize';
 import useStyleUtils from '@hooks/useStyleUtils';
 import useTheme from '@hooks/useTheme';
 import useThemeStyles from '@hooks/useThemeStyles';
+import {canUseTouchScreen} from '@libs/DeviceCapabilities';
 import Parser from '@libs/Parser';
 import StringUtils from '@libs/StringUtils';
 import {
@@ -161,7 +162,7 @@ function TransactionItemRow({
             return styles.activeComponentBG;
         }
 
-        if (hovered || isParentHovered) {
+        if (hovered || (isParentHovered && !canUseTouchScreen())) {
             return styles.hoveredComponentBG;
         }
     }, [hovered, isParentHovered, isSelected, styles.activeComponentBG, styles.hoveredComponentBG]);
