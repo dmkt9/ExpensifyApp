@@ -95,6 +95,9 @@ function WorkspaceUpgradePage({route}: WorkspaceUpgradePageProps) {
             case CONST.UPGRADE_FEATURE_INTRO_MAPPING.rules.id:
             case CONST.UPGRADE_FEATURE_INTRO_MAPPING.perDiem.id:
                 return Navigation.goBack(ROUTES.WORKSPACE_MORE_FEATURES.getRoute(policyID));
+            case CONST.UPGRADE_FEATURE_INTRO_MAPPING.multiLevelTags.id:
+                Navigation.goBack(ROUTES.WORKSPACE_TAGS_IMPORT.getRoute(policyID));
+                return;
             default:
                 return route.params.backTo ? Navigation.goBack(route.params.backTo) : Navigation.goBack();
         }
