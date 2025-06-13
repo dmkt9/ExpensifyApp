@@ -11728,16 +11728,6 @@ function saveSplitTransactions(draftTransaction: OnyxEntry<OnyxTypes.Transaction
         value: originalTransaction,
     });
 
-    failureData.push({
-        onyxMethod: Onyx.METHOD.MERGE,
-        key: `${ONYXKEYS.COLLECTION.SNAPSHOT}${hash}`,
-        value: {
-            data: {
-                [`${ONYXKEYS.COLLECTION.TRANSACTION}${originalTransactionID}`]: originalTransactionViolations,
-            },
-        },
-    });
-
     // Prepare splitApiParams for the Transaction_Split API call which requires a specific format for the splits
     // The format is: splits[0][amount], splits[0][category], splits[0][tag], etc.
     const splitApiParams = {} as Record<string, string | number>;
