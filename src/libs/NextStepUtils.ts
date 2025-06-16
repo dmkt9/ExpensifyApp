@@ -216,30 +216,8 @@ function buildNextStep(
                 };
                 break;
             }
-            if (isReopen) {
-                optimisticNextStep = {
-                    type,
-                    icon: CONST.NEXT_STEP.ICONS.HOURGLASS,
-                    message: [
-                        {
-                            text: 'Waiting for ',
-                        },
-                        {
-                            text: `${ownerDisplayName}`,
-                            type: 'strong',
-                            clickToCopyText: ownerAccountID === currentUserAccountID ? currentUserEmail : '',
-                        },
-                        {
-                            text: ' to ',
-                        },
-                        {
-                            text: 'submit',
-                        },
-                        {
-                            text: ' %expenses.',
-                        },
-                    ],
-                };
+            if (isReopen && (!policy.areWorkflowsEnabled || autoReportingFrequency === CONST.POLICY.AUTO_REPORTING_FREQUENCIES.INSTANT)) {
+                optimisticNextStep = null;
                 break;
             }
 
