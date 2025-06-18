@@ -28,6 +28,7 @@ import {
     getSettingsTabStateFromSessionStorage,
     getWorkspacesTabStateFromSessionStorage,
 } from '@libs/Navigation/helpers/lastVisitedTabPathUtils';
+import {getPolicy, shouldShowPolicy} from '@libs/PolicyUtils';
 import {buildCannedSearchQuery, buildSearchQueryJSON, buildSearchQueryString} from '@libs/SearchQueryUtils';
 import type {BrickRoad} from '@libs/WorkspacesSettingsUtils';
 import {getChatTabBrickRoad} from '@libs/WorkspacesSettingsUtils';
@@ -172,7 +173,8 @@ function NavigationTabBar({selectedTab, isTooltipAllowed = false, isTopLevelBar 
             if (lastWorkspacesTabNavigatorRoute.name === NAVIGATORS.WORKSPACE_SPLIT_NAVIGATOR) {
                 const params = workspacesTabState?.routes.at(0)?.params as WorkspaceSplitNavigatorParamList[typeof SCREENS.WORKSPACE.INITIAL];
                 // Screens of this navigator should always have policyID
-                if (params.policyID) {
+                const policy = getPolicy(params.policyID);
+                if (params.policyID && shouldShowPolicy(policy, false, undefined)) {
                     const workspaceScreenName = !shouldUseNarrowLayout ? getLastVisitedWorkspaceTabScreen() : SCREENS.WORKSPACE.INITIAL;
                     // This action will put settings split under the workspace split to make sure that we can swipe back to settings split.
                     navigationRef.dispatch({
@@ -182,8 +184,8 @@ function NavigationTabBar({selectedTab, isTooltipAllowed = false, isTopLevelBar 
                             screenName: workspaceScreenName,
                         },
                     });
+                    return;
                 }
-                return;
             }
 
             Navigation.navigate(ROUTES.WORKSPACES_LIST.route);
