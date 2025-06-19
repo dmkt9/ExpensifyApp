@@ -224,6 +224,7 @@ function ScreenWrapper(
     const [didScreenTransitionEnd, setDidScreenTransitionEnd] = useState(false);
     const maxHeight = shouldEnableMaxHeight ? windowHeight : undefined;
     const minHeight = shouldEnableMinHeight && !isSafari() ? initialHeight : undefined;
+    const maxHeightSafari = shouldEnableMaxHeight && isSafari() ? initialHeight : undefined;
 
     const {isBlurred, setIsBlurred} = useInputBlurContext();
 
@@ -469,7 +470,12 @@ function ScreenWrapper(
                     {...keyboardDismissPanResponder.panHandlers}
                 >
                     <KeyboardAvoidingView
-                        style={[styles.w100, styles.h100, !isBlurred ? {maxHeight} : undefined, isAvoidingViewportScroll ? [styles.overflowAuto, styles.overscrollBehaviorContain] : {}]}
+                        style={[
+                            styles.w100,
+                            styles.h100,
+                            !isBlurred ? {maxHeight} : {maxHeight: maxHeightSafari},
+                            isAvoidingViewportScroll ? [styles.overflowAuto, styles.overscrollBehaviorContain] : {},
+                        ]}
                         behavior={keyboardAvoidingViewBehavior}
                         enabled={shouldEnableKeyboardAvoidingView}
                         // Whether the mobile offline indicator or the content in general
