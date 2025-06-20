@@ -4213,6 +4213,9 @@ function canEditFieldOfMoneyRequest(reportAction: OnyxInputOrEntry<ReportAction>
     }
 
     if (fieldToEdit === CONST.EDIT_REQUEST_FIELD.REPORT) {
+        if (isInvoiceReport(moneyRequestReport)) {
+            return false;
+        }
         // Unreported transaction from OldDot can have the reportID as an empty string
         const isUnreported = !transaction?.reportID || transaction?.reportID === CONST.REPORT.UNREPORTED_REPORT_ID;
         return isUnreported
@@ -9940,7 +9943,7 @@ function isReportOutstanding(
     }
     const reportNameValuePair = reportNameValuePairs?.[`${ONYXKEYS.COLLECTION.REPORT_NAME_VALUE_PAIRS}${iouReport.reportID}`];
     return (
-        isExpenseReport(iouReport) &&
+        (isExpenseReport(iouReport) || isInvoiceReport(iouReport)) &&
         iouReport?.stateNum !== undefined &&
         iouReport?.statusNum !== undefined &&
         iouReport?.policyID === policyID &&
