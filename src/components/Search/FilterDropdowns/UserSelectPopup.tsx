@@ -160,7 +160,7 @@ function UserSelectPopup({value, closeOverlay, onChange}: UserSelectPopupProps) 
     const dataLength = sections.flatMap((section) => section.data).length;
 
     return (
-        <View style={[styles.getUserSelectionListPopoverHeight(dataLength || 1, windowHeight, shouldUseNarrowLayout)]}>
+        <View style={[styles.getUserSelectionListPopoverHeight(dataLength || 1, windowHeight, shouldUseNarrowLayout), !shouldUseNarrowLayout && styles.pv4, styles.gap2]}>
             <SelectionList
                 canSelectMultiple
                 textInputAutoFocus
@@ -168,8 +168,6 @@ function UserSelectPopup({value, closeOverlay, onChange}: UserSelectPopupProps) 
                 headerMessage={headerMessage}
                 sections={sections}
                 ListItem={UserSelectionListItem}
-                containerStyle={[!shouldUseNarrowLayout && styles.pt4]}
-                contentContainerStyle={[styles.pb2]}
                 textInputLabel={translate('selectionList.searchForSomeone')}
                 textInputValue={searchTerm}
                 onSelectRow={selectUser}
@@ -177,7 +175,7 @@ function UserSelectPopup({value, closeOverlay, onChange}: UserSelectPopupProps) 
                 isLoadingNewOptions={isLoadingNewOptions}
             />
 
-            <View style={[styles.flexRow, styles.gap2, styles.mh5, !shouldUseNarrowLayout && styles.mb4]}>
+            <View style={[styles.flexRow, styles.gap2, styles.mh5]}>
                 <Button
                     medium
                     style={[styles.flex1]}
