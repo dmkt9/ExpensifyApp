@@ -4,6 +4,7 @@ import {LogBox} from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {PickerStateProvider} from 'react-native-picker-select';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
+import {MouseProvider} from '@hooks/useMouseContext';
 import '../wdyr';
 import {ActionSheetAwareScrollViewProvider} from './components/ActionSheetAwareScrollView';
 import ActiveElementRoleProvider from './components/ActiveElementRoleProvider';
@@ -112,6 +113,7 @@ function App({url, hybridAppSettings}: AppProps) {
                                 InputBlurContextProvider,
                                 FullScreenBlockingViewContextProvider,
                                 FullScreenLoaderContextProvider,
+                                MouseProvider,
                             ]}
                         >
                             <CustomStatusBarAndBackground />

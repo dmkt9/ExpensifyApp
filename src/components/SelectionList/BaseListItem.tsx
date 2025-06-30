@@ -57,6 +57,11 @@ function BaseListItem<TItem extends ListItem>({
         e.stopPropagation();
         setMouseUp();
     };
+    const handleMouseUp = (e: React.MouseEvent<Element, MouseEvent>) => {
+        e.stopPropagation();
+        // It is necessary to use setTimeout to trigger this after the `onPress` event is triggered
+        setTimeout(setMouseUp);
+    };
 
     const rightHandSideComponentRender = () => {
         if (canSelectMultiple || !rightHandSideComponent) {
@@ -112,6 +117,7 @@ function BaseListItem<TItem extends ListItem>({
                 ]}
                 onFocus={onFocus}
                 onMouseLeave={handleMouseLeave}
+                onMouseUp={handleMouseUp}
                 tabIndex={item.tabIndex}
                 wrapperStyle={pressableWrapperStyle}
                 testID={testID}
