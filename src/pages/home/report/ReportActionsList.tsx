@@ -14,6 +14,7 @@ import useCurrentUserPersonalDetails from '@hooks/useCurrentUserPersonalDetails'
 import useLocalize from '@hooks/useLocalize';
 import useNetworkWithOfflineStatus from '@hooks/useNetworkWithOfflineStatus';
 import usePrevious from '@hooks/usePrevious';
+import useReportHighlightAndScroll from '@hooks/useReportHighlightAndScroll';
 import useReportIsArchived from '@hooks/useReportIsArchived';
 import useReportScrollManager from '@hooks/useReportScrollManager';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
@@ -394,6 +395,13 @@ function ReportActionsList({
         // eslint-disable-next-line react-compiler/react-compiler, react-hooks/exhaustive-deps
     }, []);
 
+    const {newReportActionResultKey, handleSelectionListScrollToHighLightItem, hasAlreadyScrolledToHighLightItem} = useReportHighlightAndScroll({report, transactions});
+
+    // eslint-disable-next-line rulesdir/prefer-early-return
+    useEffect(() => {
+        handleSelectionListScrollToHighLightItem(sortedVisibleReportActions, reportScrollManager);
+    }, [newReportActionResultKey, handleSelectionListScrollToHighLightItem, sortedVisibleReportActions, reportScrollManager]);
+
     // Fixes Safari-specific issue where the whisper option is not highlighted correctly on hover after adding new transaction.
     // https://github.com/Expensify/App/issues/54520
     useEffect(() => {
@@ -427,11 +435,13 @@ function ReportActionsList({
                     return;
                 }
 
-                reportScrollManager.scrollToBottom();
-                setIsScrollToBottomEnabled(true);
+                if (!hasAlreadyScrolledToHighLightItem()) {
+                    reportScrollManager.scrollToBottom();
+                    setIsScrollToBottomEnabled(true);
+                }
             });
         },
-        [report.reportID, reportScrollManager, setIsFloatingMessageCounterVisible],
+        [report.reportID, reportScrollManager, setIsFloatingMessageCounterVisible, hasAlreadyScrolledToHighLightItem],
     );
     useEffect(() => {
         // Why are we doing this, when in the cleanup of the useEffect we are already calling the unsubscribe function?
@@ -599,6 +609,7 @@ function ReportActionsList({
                     isFirstVisibleReportAction={firstVisibleReportActionID === reportAction.reportActionID}
                     shouldUseThreadDividerLine={shouldUseThreadDividerLine}
                     transactions={Object.values(transactions ?? {})}
+                    shouldAnimateInHighlight={reportAction?.reportActionID === newReportActionResultKey}
                 />
             );
         },
@@ -617,6 +628,7 @@ function ReportActionsList({
             shouldUseThreadDividerLine,
             firstVisibleReportActionID,
             unreadMarkerReportActionID,
+            newReportActionResultKey,
         ],
     );
 

@@ -1,9 +1,10 @@
 import {deepEqual} from 'fast-equals';
 import mapValues from 'lodash/mapValues';
 import React, {memo, useCallback, useContext, useEffect, useMemo, useRef, useState} from 'react';
-import type {GestureResponderEvent, TextInput} from 'react-native';
+import type {GestureResponderEvent, StyleProp, TextInput, ViewStyle} from 'react-native';
 import {InteractionManager, Keyboard, View} from 'react-native';
 import type {OnyxCollection, OnyxEntry} from 'react-native-onyx';
+import type {AnimatedStyle} from 'react-native-reanimated';
 import type {ValueOf} from 'type-fest';
 import type {Emoji} from '@assets/emojis/types';
 import * as ActionSheetAwareScrollView from '@components/ActionSheetAwareScrollView';
@@ -358,6 +359,9 @@ type PureReportActionItemProps = {
 
     /** Whether to show border for MoneyRequestReportPreviewContent */
     shouldShowBorder?: boolean;
+
+    /** Styles for the pressable component wrapper view */
+    pressableWrapperStyle?: StyleProp<AnimatedStyle<ViewStyle>>;
 };
 
 // This is equivalent to returning a negative boolean in normal functions, but we can keep the element return type
@@ -422,6 +426,7 @@ function PureReportActionItem({
     userBillingFundID,
     policies,
     shouldShowBorder,
+    pressableWrapperStyle,
 }: PureReportActionItemProps) {
     const actionSheetAwareScrollViewContext = useContext(ActionSheetAwareScrollView.ActionSheetAwareScrollViewContext);
     const {translate, datetimeToCalendarTime} = useLocalize();
@@ -1446,6 +1451,7 @@ function PureReportActionItem({
             withoutFocusOnSecondaryInteraction
             accessibilityLabel={translate('accessibilityHints.chatMessage')}
             accessible
+            wrapperStyle={pressableWrapperStyle}
         >
             <Hoverable
                 shouldHandleScroll
@@ -1600,6 +1606,7 @@ export default memo(PureReportActionItem, (prevProps, nextProps) => {
         deepEqual(prevProps.missingPaymentMethod, nextProps.missingPaymentMethod) &&
         prevProps.reimbursementDeQueuedOrCanceledActionMessage === nextProps.reimbursementDeQueuedOrCanceledActionMessage &&
         prevProps.modifiedExpenseMessage === nextProps.modifiedExpenseMessage &&
-        prevProps.userBillingFundID === nextProps.userBillingFundID
+        prevProps.userBillingFundID === nextProps.userBillingFundID &&
+        deepEqual(prevProps.pressableWrapperStyle, nextProps.pressableWrapperStyle)
     );
 });

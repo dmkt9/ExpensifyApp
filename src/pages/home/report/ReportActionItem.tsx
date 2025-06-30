@@ -1,8 +1,10 @@
 import React, {useMemo} from 'react';
 import type {OnyxCollection, OnyxEntry} from 'react-native-onyx';
 import {useBlockedFromConcierge} from '@components/OnyxProvider';
+import useAnimatedHighlightStyle from '@hooks/useAnimatedHighlightStyle';
 import useOnyx from '@hooks/useOnyx';
 import useReportIsArchived from '@hooks/useReportIsArchived';
+import useTheme from '@hooks/useTheme';
 import ModifiedExpenseMessage from '@libs/ModifiedExpenseMessage';
 import {getIOUReportIDFromReportActionPreview, getOriginalMessage, isMoneyRequestAction} from '@libs/ReportActionsUtils';
 import {
@@ -41,9 +43,11 @@ type ReportActionItemProps = Omit<PureReportActionItemProps, 'taskReport' | 'lin
 
     /** All the data of the transaction collection */
     transactions?: Array<OnyxEntry<Transaction>>;
+
+    shouldAnimateInHighlight?: boolean;
 };
 
-function ReportActionItem({allReports, action, report, transactions, shouldShowDraftMessage = true, ...props}: ReportActionItemProps) {
+function ReportActionItem({allReports, action, report, transactions, shouldShowDraftMessage = true, shouldAnimateInHighlight = false, ...props}: ReportActionItemProps) {
     const reportID = report?.reportID;
     const originalMessage = getOriginalMessage(action);
     // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
@@ -84,11 +88,17 @@ function ReportActionItem({allReports, action, report, transactions, shouldShowD
     const taskReport = originalMessage && 'taskReportID' in originalMessage ? allReports?.[`${ONYXKEYS.COLLECTION.REPORT}${originalMessage.taskReportID}`] : undefined;
     const linkedReport = originalMessage && 'linkedReportID' in originalMessage ? allReports?.[`${ONYXKEYS.COLLECTION.REPORT}${originalMessage.linkedReportID}`] : undefined;
     const iouReportOfLinkedReport = linkedReport && 'iouReportID' in linkedReport ? allReports?.[`${ONYXKEYS.COLLECTION.REPORT}${linkedReport.iouReportID}`] : undefined;
+    const theme = useTheme();
+    const animatedHighlightStyle = useAnimatedHighlightStyle({
+        shouldHighlight: shouldAnimateInHighlight,
+        highlightColor: theme.messageHighlightBG,
+    });
 
     return (
         <PureReportActionItem
             // eslint-disable-next-line react/jsx-props-no-spreading
             {...props}
+            pressableWrapperStyle={animatedHighlightStyle}
             action={action}
             report={report}
             policy={policy}
