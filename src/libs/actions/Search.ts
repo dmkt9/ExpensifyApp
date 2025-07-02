@@ -21,7 +21,7 @@ import ONYXKEYS from '@src/ONYXKEYS';
 import {FILTER_KEYS} from '@src/types/form/SearchAdvancedFiltersForm';
 import type {SearchAdvancedFiltersForm} from '@src/types/form/SearchAdvancedFiltersForm';
 import type {LastPaymentMethod, LastPaymentMethodType, SearchResults} from '@src/types/onyx';
-import type {SearchPolicy, SearchReport, SearchTransaction} from '@src/types/onyx/SearchResults';
+import type {SearchDataTypes, SearchPolicy, SearchReport, SearchTransaction} from '@src/types/onyx/SearchResults';
 import type Nullable from '@src/types/utils/Nullable';
 
 let lastPaymentMethod: OnyxEntry<LastPaymentMethod>;
@@ -442,6 +442,18 @@ function clearAdvancedFilters() {
     Onyx.merge(ONYXKEYS.FORMS.SEARCH_ADVANCED_FILTERS_FORM, values);
 }
 
+/**
+ * Reset all values for the advanced filters search form whenever search type changes.
+ */
+function updateAdvancedFiltersForTypeChanged(type: SearchDataTypes) {
+    const updatedFilters = {
+        type,
+        groupBy: null,
+        status: CONST.SEARCH.STATUS.EXPENSE.ALL,
+    };
+    Onyx.set(ONYXKEYS.FORMS.SEARCH_ADVANCED_FILTERS_FORM, updatedFilters);
+}
+
 export {
     saveSearch,
     search,
@@ -462,4 +474,5 @@ export {
     openSearchFiltersCardPage,
     openSearchPage as openSearch,
     getLastPolicyPaymentMethod,
+    updateAdvancedFiltersForTypeChanged,
 };

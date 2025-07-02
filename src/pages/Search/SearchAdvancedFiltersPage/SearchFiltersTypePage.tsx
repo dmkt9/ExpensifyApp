@@ -10,7 +10,7 @@ import SingleSelectListItem from '@components/SelectionList/SingleSelectListItem
 import type {ListItem} from '@components/SelectionList/types';
 import useLocalize from '@hooks/useLocalize';
 import useThemeStyles from '@hooks/useThemeStyles';
-import {updateAdvancedFilters} from '@libs/actions/Search';
+import {updateAdvancedFiltersForTypeChanged} from '@libs/actions/Search';
 import Navigation from '@libs/Navigation/Navigation';
 import {getTypeOptions} from '@libs/SearchUIUtils';
 import CONST from '@src/CONST';
@@ -44,14 +44,9 @@ function SearchFiltersTypePage() {
 
     const applyChanges = useCallback(() => {
         const hasTypeChanged = selectedItem !== searchAdvancedFiltersForm?.type;
-        const updatedFilters = {
-            type: selectedItem,
-            ...(hasTypeChanged && {
-                groupBy: null,
-                status: CONST.SEARCH.STATUS.EXPENSE.ALL,
-            }),
-        };
-        updateAdvancedFilters(updatedFilters);
+        if (hasTypeChanged) {
+            updateAdvancedFiltersForTypeChanged(selectedItem);
+        }
         Navigation.goBack(ROUTES.SEARCH_ADVANCED_FILTERS);
     }, [searchAdvancedFiltersForm?.type, selectedItem]);
 
