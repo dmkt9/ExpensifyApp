@@ -10,6 +10,7 @@ import InvertedFlatList from '@components/InvertedFlatList';
 import {AUTOSCROLL_TO_TOP_THRESHOLD} from '@components/InvertedFlatList/BaseInvertedFlatList';
 import {usePersonalDetails} from '@components/OnyxProvider';
 import ReportActionsSkeletonView from '@components/ReportActionsSkeletonView';
+import UnreadActionIndicatorContextProvider from '@components/UnreadActionIndicatorContext';
 import useCurrentUserPersonalDetails from '@hooks/useCurrentUserPersonalDetails';
 import useLocalize from '@hooks/useLocalize';
 import useNetworkWithOfflineStatus from '@hooks/useNetworkWithOfflineStatus';
@@ -693,39 +694,44 @@ function ReportActionsList({
                 isActive={isFloatingMessageCounterVisible}
                 onClick={scrollToBottomAndMarkReportAsRead}
             />
-            <View
-                style={[styles.flex1, !shouldShowReportRecipientLocalTime && !hideComposer ? styles.pb4 : {}]}
-                testID={reportActionsListTestID}
-                nativeID={reportActionsListTestID}
-                fsClass={reportActionsListFSClass}
+            <UnreadActionIndicatorContextProvider
+                sortedVisibleReportActions={sortedVisibleReportActions}
+                unreadMarkerReportActionID={unreadMarkerReportActionID}
             >
-                <InvertedFlatList
-                    accessibilityLabel={translate('sidebarScreen.listOfChatMessages')}
-                    ref={reportScrollManager.ref}
-                    testID="report-actions-list"
-                    style={styles.overscrollBehaviorContain}
-                    data={sortedVisibleReportActions}
-                    renderItem={renderItem}
-                    renderScrollComponent={renderScrollComponent}
-                    contentContainerStyle={styles.chatContentScrollView}
-                    keyExtractor={keyExtractor}
-                    initialNumToRender={initialNumToRender}
-                    onEndReached={onEndReached}
-                    onEndReachedThreshold={0.75}
-                    onStartReached={onStartReached}
-                    onStartReachedThreshold={0.75}
-                    ListHeaderComponent={listHeaderComponent}
-                    ListFooterComponent={listFooterComponent}
-                    keyboardShouldPersistTaps="handled"
-                    onLayout={onLayoutInner}
-                    onScroll={trackVerticalScrolling}
-                    onScrollToIndexFailed={onScrollToIndexFailed}
-                    extraData={extraData}
-                    key={listID}
-                    shouldEnableAutoScrollToTopThreshold={shouldEnableAutoScrollToTopThreshold}
-                    initialScrollKey={reportActionID}
-                />
-            </View>
+                <View
+                    style={[styles.flex1, !shouldShowReportRecipientLocalTime && !hideComposer ? styles.pb4 : {}]}
+                    testID={reportActionsListTestID}
+                    nativeID={reportActionsListTestID}
+                    fsClass={reportActionsListFSClass}
+                >
+                    <InvertedFlatList
+                        accessibilityLabel={translate('sidebarScreen.listOfChatMessages')}
+                        ref={reportScrollManager.ref}
+                        testID="report-actions-list"
+                        style={styles.overscrollBehaviorContain}
+                        data={sortedVisibleReportActions}
+                        renderItem={renderItem}
+                        renderScrollComponent={renderScrollComponent}
+                        contentContainerStyle={styles.chatContentScrollView}
+                        keyExtractor={keyExtractor}
+                        initialNumToRender={initialNumToRender}
+                        onEndReached={onEndReached}
+                        onEndReachedThreshold={0.75}
+                        onStartReached={onStartReached}
+                        onStartReachedThreshold={0.75}
+                        ListHeaderComponent={listHeaderComponent}
+                        ListFooterComponent={listFooterComponent}
+                        keyboardShouldPersistTaps="handled"
+                        onLayout={onLayoutInner}
+                        onScroll={trackVerticalScrolling}
+                        onScrollToIndexFailed={onScrollToIndexFailed}
+                        extraData={extraData}
+                        key={listID}
+                        shouldEnableAutoScrollToTopThreshold={shouldEnableAutoScrollToTopThreshold}
+                        initialScrollKey={reportActionID}
+                    />
+                </View>
+            </UnreadActionIndicatorContextProvider>
         </>
     );
 }

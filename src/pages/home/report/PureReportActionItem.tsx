@@ -37,6 +37,7 @@ import {ShowContextMenuContext} from '@components/ShowContextMenuContext';
 import Text from '@components/Text';
 import TextLink from '@components/TextLink';
 import UnreadActionIndicator from '@components/UnreadActionIndicator';
+import {useUnreadActionIndicatorContext} from '@components/UnreadActionIndicatorContext';
 import useLocalize from '@hooks/useLocalize';
 import usePermissions from '@hooks/usePermissions';
 import usePrevious from '@hooks/usePrevious';
@@ -444,6 +445,7 @@ function PureReportActionItem({
     const [isReportActionActive, setIsReportActionActive] = useState(!!isReportActionLinked);
     const isActionableWhisper = isActionableMentionWhisper(action) || isActionableTrackExpense(action) || isActionableReportMentionWhisper(action);
     const isReportArchived = useReportIsArchived(report?.reportID);
+    const {unreadMarkerReportActionID, setReportActionHasComponentToDisplay} = useUnreadActionIndicatorContext();
 
     const highlightedBackgroundColorIfNeeded = useMemo(
         () => (isReportActionLinked ? StyleUtils.getBackgroundColorStyle(theme.messageHighlightBG) : {}),
@@ -1318,6 +1320,7 @@ function PureReportActionItem({
             return emptyHTML;
         }
 
+        setReportActionHasComponentToDisplay(action.reportActionID);
         if (draftMessage !== undefined) {
             return <ReportActionItemDraft>{content}</ReportActionItemDraft>;
         }
@@ -1462,7 +1465,9 @@ function PureReportActionItem({
             >
                 {(hovered) => (
                     <View style={highlightedBackgroundColorIfNeeded}>
-                        {shouldDisplayNewMarker && (!shouldUseThreadDividerLine || !isFirstVisibleReportAction) && <UnreadActionIndicator reportActionID={action.reportActionID} />}
+                        {unreadMarkerReportActionID === action.reportActionID && (!shouldUseThreadDividerLine || !isFirstVisibleReportAction) && (
+                            <UnreadActionIndicator reportActionID={action.reportActionID} />
+                        )}
                         {shouldDisplayContextMenu && (
                             <MiniReportActionContextMenu
                                 reportID={reportID}
