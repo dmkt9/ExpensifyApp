@@ -502,13 +502,23 @@ function getLastModifiedExpense(reportID?: string): OriginalMessageModifiedExpen
     return getOriginalMessage(modifiedExpenseActions.at(-1));
 }
 
-function revert(transactionID?: string, originalMessage?: OriginalMessageModifiedExpense | undefined) {
+function revert(transactionID?: string, reportID?: string) {
     const transaction = allTransactions?.[`${ONYXKEYS.COLLECTION.TRANSACTION}${transactionID}`] ?? ({} as Transaction);
+    if (!transaction) {
+        return;
+    }
+    const modifiedExpenseActions = Object.values(getAllReportActions(reportID)).filter(isModifiedExpenseAction);
+    modifiedExpenseActions.sort((a, b) => Number(a.reportActionID) - Number(b.reportActionID));
+    const latestModifiedExpenseActions = modifiedExpenseActions.at(-1);
+    const originalMessage = getOriginalMessage(latestModifiedExpenseActions);
+    const isReportActionPending = !!latestModifiedExpenseActions?.pendingAction;
 
-    if (transaction && originalMessage?.oldAmount && originalMessage.oldCurrency && 'amount' in originalMessage && 'currency' in originalMessage) {
+    if (originalMessage?.oldAmount && originalMessage.oldCurrency && 'amount' in originalMessage && 'currency' in originalMessage) {
+        const revertedAmount = (isReportActionPending ? originalMessage?.oldAmount : originalMessage?.amount) ?? transaction.amount;
+        const revertedCurrency = (isReportActionPending ? originalMessage?.oldCurrency : originalMessage?.currency) ?? transaction.currency;
         Onyx.merge(`${ONYXKEYS.COLLECTION.TRANSACTION}${transactionID}`, {
-            modifiedAmount: transaction?.amount && transaction?.amount < 0 ? -Math.abs(originalMessage.oldAmount) : originalMessage.oldAmount,
-            modifiedCurrency: originalMessage.oldCurrency,
+            modifiedAmount: transaction.amount < 0 ? -Math.abs(revertedAmount) : revertedAmount,
+            modifiedCurrency: revertedCurrency,
         });
     }
 }

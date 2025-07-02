@@ -70,7 +70,7 @@ import AnimatedEmptyStateBackground from '@pages/home/report/AnimatedEmptyStateB
 import {cleanUpMoneyRequest, updateMoneyRequestBillable} from '@userActions/IOU';
 import {navigateToConciergeChatAndDeleteReport} from '@userActions/Report';
 import {clearAllRelatedReportActionErrors} from '@userActions/ReportActions';
-import {clearError, getLastModifiedExpense, revert} from '@userActions/Transaction';
+import {clearError, revert} from '@userActions/Transaction';
 import CONST from '@src/CONST';
 import type {TranslationPaths} from '@src/languages/types';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -540,7 +540,7 @@ function MoneyRequestView({report, shouldShowAnimatedBackground, readonly = fals
             clearAllRelatedReportActionErrors(report.reportID, parentReportAction);
             return;
         }
-        revert(transaction?.transactionID ?? linkedTransactionID, getLastModifiedExpense(report?.reportID));
+        revert(transaction?.transactionID ?? linkedTransactionID, report?.reportID);
         clearError(transaction.transactionID);
         clearAllRelatedReportActionErrors(report.reportID, parentReportAction);
     }, [transaction, chatReport, parentReportAction, linkedTransactionID, report?.reportID]);
