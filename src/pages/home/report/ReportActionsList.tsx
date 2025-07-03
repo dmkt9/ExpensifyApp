@@ -26,6 +26,7 @@ import isReportTopmostSplitNavigator from '@libs/Navigation/helpers/isReportTopm
 import isSearchTopmostFullScreenRoute from '@libs/Navigation/helpers/isSearchTopmostFullScreenRoute';
 import Navigation from '@libs/Navigation/Navigation';
 import type {PlatformStackRouteProp} from '@libs/Navigation/PlatformStackNavigation/types';
+import ReportActionComposeFocusManager from '@libs/ReportActionComposeFocusManager';
 import {
     getFirstVisibleReportActionID,
     isConsecutiveActionMadeByPreviousActor,
@@ -633,6 +634,11 @@ function ReportActionsList({
     const onLayoutInner = useCallback(
         (event: LayoutChangeEvent) => {
             onLayout(event);
+            const isEditComposerFocused = ReportActionComposeFocusManager.isEditFocused();
+            if (isEditComposerFocused) {
+                setIsScrollToBottomEnabled(false);
+                return;
+            }
             if (isScrollToBottomEnabled) {
                 reportScrollManager.scrollToBottom();
                 setIsScrollToBottomEnabled(false);
