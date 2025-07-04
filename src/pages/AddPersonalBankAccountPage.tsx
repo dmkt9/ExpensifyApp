@@ -1,6 +1,5 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import AddPlaidBankAccount from '@components/AddPlaidBankAccount';
-import FullPageNotFoundView from '@components/BlockingViews/FullPageNotFoundView';
 import ConfirmationPage from '@components/ConfirmationPage';
 import DelegateNoAccessWrapper from '@components/DelegateNoAccessWrapper';
 import FormProvider from '@components/Form/FormProvider';
@@ -8,9 +7,12 @@ import InputWrapper from '@components/Form/InputWrapper';
 import HeaderWithBackButton from '@components/HeaderWithBackButton';
 import ScreenWrapper from '@components/ScreenWrapper';
 import ScrollView from '@components/ScrollView';
+import ValidateCodeActionModal from '@components/ValidateCodeActionModal';
 import useLocalize from '@hooks/useLocalize';
 import useOnyx from '@hooks/useOnyx';
 import useThemeStyles from '@hooks/useThemeStyles';
+import {clearContactMethodErrors, requestValidateCodeAction, validateSecondaryLogin} from '@libs/actions/User';
+import {getEarliestErrorField, getLatestErrorField} from '@libs/ErrorUtils';
 import getPlaidOAuthReceivedRedirectURI from '@libs/getPlaidOAuthReceivedRedirectURI';
 import {isFullScreenName} from '@libs/Navigation/helpers/isNavigatorName';
 import Navigation, {navigationRef} from '@libs/Navigation/Navigation';
@@ -21,12 +23,18 @@ import NAVIGATORS from '@src/NAVIGATORS';
 import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
 import INPUT_IDS from '@src/types/form/ReimbursementAccountForm';
+import {isEmptyObject} from '@src/types/utils/EmptyObject';
 
 function AddPersonalBankAccountPage() {
     const styles = useThemeStyles();
     const {translate} = useLocalize();
     const [selectedPlaidAccountId, setSelectedPlaidAccountId] = useState('');
-    const [isUserValidated] = useOnyx(ONYXKEYS.ACCOUNT, {selector: (account) => account?.validated, canBeMissing: false});
+    const [account] = useOnyx(ONYXKEYS.ACCOUNT, {canBeMissing: true});
+    const isUserValidated = account?.validated ?? false;
+    const contactMethod = account?.primaryLogin ?? '';
+    const [loginList] = useOnyx(ONYXKEYS.LOGIN_LIST, {canBeMissing: true});
+    const loginData = useMemo(() => loginList?.[contactMethod], [loginList, contactMethod]);
+    const validateLoginError = getEarliestErrorField(loginData, 'validateLogin');
     const [personalBankAccount] = useOnyx(ONYXKEYS.PERSONAL_BANK_ACCOUNT, {canBeMissing: true});
     const [plaidData] = useOnyx(ONYXKEYS.PLAID_DATA, {canBeMissing: true});
     const shouldShowSuccess = personalBankAccount?.shouldShowSuccess ?? false;
@@ -83,7 +91,7 @@ function AddPersonalBankAccountPage() {
             shouldShowOfflineIndicator={false}
             testID={AddPersonalBankAccountPage.displayName}
         >
-            <FullPageNotFoundView shouldShow={!isUserValidated}>
+            {isUserValidated ? (
                 <DelegateNoAccessWrapper accessDeniedVariants={[CONST.DELEGATE.DENIED_ACCESS_VARIANTS.DELEGATE]}>
                     <HeaderWithBackButton
                         title={translate('bankAccount.addBankAccount')}
@@ -125,7 +133,20 @@ function AddPersonalBankAccountPage() {
                         </FormProvider>
                     )}
                 </DelegateNoAccessWrapper>
-            </FullPageNotFoundView>
+            ) : (
+                <ValidateCodeActionModal
+                    title={translate('contacts.validateAccount')}
+                    descriptionPrimary={translate('contacts.enterMagicCode', {contactMethod})}
+                    isVisible={!isUserValidated}
+                    validateCodeActionErrorField="validateLogin"
+                    validatePendingAction={loginData?.pendingFields?.validateCodeSent}
+                    sendValidateCode={() => requestValidateCodeAction()}
+                    handleSubmitForm={(validateCode) => validateSecondaryLogin(loginList, contactMethod, validateCode, true)}
+                    validateError={!isEmptyObject(validateLoginError) ? validateLoginError : getLatestErrorField(loginData, 'validateCodeSent')}
+                    clearError={() => clearContactMethodErrors(contactMethod, !isEmptyObject(validateLoginError) ? 'validateLogin' : 'validateCodeSent')}
+                    onClose={shouldShowSuccess ? exitFlow : Navigation.goBack}
+                />
+            )}
         </ScreenWrapper>
     );
 }
