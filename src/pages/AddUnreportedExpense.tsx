@@ -1,5 +1,5 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react';
-import type {OnyxCollection} from 'react-native-onyx';
+import type {OnyxCollection, OnyxEntry} from 'react-native-onyx';
 import EmptyStateComponent from '@components/EmptyStateComponent';
 import FormHelpMessage from '@components/FormHelpMessage';
 import HeaderWithBackButton from '@components/HeaderWithBackButton';
@@ -45,7 +45,11 @@ function AddUnreportedExpense({route}: AddUnreportedExpensePageType) {
     const [hasMoreUnreportedTransactionsResults] = useOnyx(ONYXKEYS.HAS_MORE_UNREPORTED_TRANSACTIONS_RESULTS, {canBeMissing: true});
     const [isLoadingUnreportedTransactions] = useOnyx(ONYXKEYS.IS_LOADING_UNREPORTED_TRANSACTIONS, {canBeMissing: true});
     const shouldShowUnreportedTransactionsSkeletons = isLoadingUnreportedTransactions && hasMoreUnreportedTransactionsResults && !isOffline;
+    const transactionsAfterConfirmRef = useRef<Array<OnyxEntry<Transaction>> | null>(null);
     function getUnreportedTransactions(transactions: OnyxCollection<Transaction>) {
+        if (transactionsAfterConfirmRef.current) {
+            return transactionsAfterConfirmRef.current;
+        }
         if (!transactions) {
             return [];
         }
@@ -181,6 +185,7 @@ function AddUnreportedExpense({route}: AddUnreportedExpensePageType) {
                         setErrorMessage(translate('iou.selectUnreportedExpense'));
                         return;
                     }
+                    transactionsAfterConfirmRef.current = transactions;
                     Navigation.dismissModal();
                     changeTransactionsReport([...selectedIds], report?.reportID ?? CONST.REPORT.UNREPORTED_REPORT_ID, policy);
                     setErrorMessage('');
