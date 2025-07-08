@@ -841,6 +841,10 @@ function shouldReportActionBeVisible(reportAction: OnyxEntry<ReportAction>, key:
         return false;
     }
 
+    if (!shouldDisplayActionsForReportView(reportAction)) {
+        return false;
+    }
+
     // All other actions are displayed except thread parents, deleted, or non-pending actions
     const isDeleted = isDeletedAction(reportAction);
     const isPending = !!reportAction.pendingAction;
@@ -983,15 +987,19 @@ function filterOutDeprecatedReportActions(reportActions: OnyxEntry<ReportActions
         .map((entry) => entry[1]);
 }
 
+function shouldDisplayActionsForReportView(action: ReportAction) {
+    const isDeletedMoneyRequest = isDeletedParentAction(action) && isMoneyRequestAction(action);
+    const isHiddenReportPreviewWithoutPendingAction = isReportPreviewAction(action) && action.pendingAction === undefined && !action.shouldShow;
+    return !isDeletedMoneyRequest && !isHiddenReportPreviewWithoutPendingAction;
+}
+
 /**
  * Helper for filtering out Report Actions that are either:
  * - ReportPreview with shouldShow set to false and without a pending action
  * - Money request with parent action deleted
  */
 function getFilteredReportActionsForReportView(actions: ReportAction[]) {
-    const isDeletedMoneyRequest = (action: ReportAction) => isDeletedParentAction(action) && isMoneyRequestAction(action);
-    const isHiddenReportPreviewWithoutPendingAction = (action: ReportAction) => isReportPreviewAction(action) && action.pendingAction === undefined && !action.shouldShow;
-    return actions.filter((action) => !isDeletedMoneyRequest(action) && !isHiddenReportPreviewWithoutPendingAction(action));
+    return actions.filter(shouldDisplayActionsForReportView);
 }
 
 /**
