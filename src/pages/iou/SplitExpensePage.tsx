@@ -40,7 +40,7 @@ function SplitExpensePage({route}: SplitExpensePageProps) {
 
     const {shouldUseNarrowLayout} = useResponsiveLayout();
 
-    const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+    const [errorMessage, setErrorMessage] = React.useState<{text: string; type: 'error' | 'hint'} | null>(null);
     const {currentSearchHash} = useSearchContext();
 
     const [draftTransaction] = useOnyx(`${ONYXKEYS.COLLECTION.SPLIT_TRANSACTION_DRAFT}${transactionID}`, {canBeMissing: false});
@@ -66,17 +66,20 @@ function SplitExpensePage({route}: SplitExpensePageProps) {
     const onSaveSplitExpense = useCallback(() => {
         if (sumOfSplitExpenses > Math.abs(transactionDetailsAmount)) {
             const difference = sumOfSplitExpenses - Math.abs(transactionDetailsAmount);
-            setErrorMessage(translate('iou.totalAmountGreaterThanOriginal', {amount: convertToDisplayString(difference, transactionDetails?.currency)}));
+            setErrorMessage({text: translate('iou.totalAmountGreaterThanOriginal', {amount: convertToDisplayString(difference, transactionDetails?.currency)}), type: 'error'});
             return;
         }
-        if (sumOfSplitExpenses < Math.abs(transactionDetailsAmount) && (isPerDiem || isCard)) {
+        if (sumOfSplitExpenses < Math.abs(transactionDetailsAmount)) {
             const difference = Math.abs(transactionDetailsAmount) - sumOfSplitExpenses;
-            setErrorMessage(translate('iou.totalAmountLessThanOriginal', {amount: convertToDisplayString(difference, transactionDetails?.currency)}));
+            setErrorMessage({
+                text: translate('iou.totalAmountLessThanOriginal', {amount: convertToDisplayString(difference, transactionDetails?.currency)}),
+                type: isPerDiem || isCard ? 'error' : 'hint',
+            });
             return;
         }
 
         if ((draftTransaction?.comment?.splitExpenses ?? []).find((item) => item.amount === 0)) {
-            setErrorMessage(translate('iou.splitExpenseZeroAmount'));
+            setErrorMessage({text: translate('iou.splitExpenseZeroAmount'), type: 'error'});
             return;
         }
 
@@ -149,11 +152,12 @@ function SplitExpensePage({route}: SplitExpensePageProps) {
     const footerContent = useMemo(() => {
         return (
             <>
-                {!!errorMessage && (
+                {!!errorMessage?.text && (
                     <FormHelpMessage
                         style={[styles.ph1, styles.mb2]}
-                        isError
-                        message={errorMessage}
+                        isError={errorMessage.type === 'error'}
+                        shouldShowExclamationMark={errorMessage.type === 'hint'}
+                        message={errorMessage.text}
                     />
                 )}
                 <Button
