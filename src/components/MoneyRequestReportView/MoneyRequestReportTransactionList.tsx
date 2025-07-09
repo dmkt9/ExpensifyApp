@@ -2,7 +2,7 @@ import {useFocusEffect} from '@react-navigation/native';
 import isEmpty from 'lodash/isEmpty';
 import React, {memo, useCallback, useMemo, useState} from 'react';
 import {View} from 'react-native';
-import Animated, {FadeIn, FadeOut} from 'react-native-reanimated';
+import Animated, {FadeIn} from 'react-native-reanimated';
 import type {TupleToUnion} from 'type-fest';
 import {getButtonRole} from '@components/Button/utils';
 import Checkbox from '@components/Checkbox';
@@ -371,7 +371,6 @@ function MoneyRequestReportTransactionList({
                 <Animated.Text
                     style={[styles.textLabelSupporting]}
                     entering={hasComments ? undefined : FadeIn}
-                    exiting={FadeOut}
                 >
                     {hasComments || isLoadingReportActions ? translate('common.comments') : ''}
                 </Animated.Text>
