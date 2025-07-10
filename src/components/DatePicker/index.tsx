@@ -1,3 +1,4 @@
+import {useIsFocused} from '@react-navigation/native';
 import {format, setYear} from 'date-fns';
 import React, {forwardRef, useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import type {ForwardedRef} from 'react';
@@ -6,6 +7,7 @@ import * as Expensicons from '@components/Icon/Expensicons';
 import TextInput from '@components/TextInput';
 import type {BaseTextInputRef} from '@components/TextInput/BaseTextInput/types';
 import useLocalize from '@hooks/useLocalize';
+import useResponsiveLayout from '@hooks/useResponsiveLayout';
 import useThemeStyles from '@hooks/useThemeStyles';
 import useWindowDimensions from '@hooks/useWindowDimensions';
 import mergeRefs from '@libs/mergeRefs';
@@ -47,6 +49,9 @@ function DatePicker(
     const anchorRef = useRef<View>(null);
     const [isInverted, setIsInverted] = useState(false);
     const isAutoFocused = useRef(false);
+    const isFocused = useIsFocused();
+    // eslint-disable-next-line rulesdir/prefer-shouldUseNarrowLayout-instead-of-isSmallScreenWidth
+    const {isSmallScreenWidth} = useResponsiveLayout();
 
     useEffect(() => {
         if (shouldSaveDraft && formID) {
@@ -76,16 +81,21 @@ function DatePicker(
         setIsModalVisible(true);
     }, [calculatePopoverPosition]);
 
-    const closeDatePicker = useCallback(() => {
-        textInputRef.current?.blur();
-        setIsModalVisible(false);
-    }, []);
+    const closeDatePicker = useCallback(
+        (newDate?: string) => {
+            textInputRef.current?.blur();
+            if (!!newDate || isSmallScreenWidth) {
+                setIsModalVisible(false);
+            }
+        },
+        [isSmallScreenWidth],
+    );
 
     const handleDateSelected = (newDate: string) => {
         onTouched?.();
         onInputChange?.(newDate);
         setSelectedDate(newDate);
-        closeDatePicker();
+        closeDatePicker(newDate);
     };
 
     const handleClear = () => {
@@ -152,7 +162,7 @@ function DatePicker(
                 maxDate={maxDate}
                 value={getValidDateForCalendar}
                 onSelected={handleDateSelected}
-                isVisible={isModalVisible}
+                isVisible={isFocused && isModalVisible}
                 onClose={closeDatePicker}
                 anchorPosition={popoverPosition}
                 shouldPositionFromTop={!isInverted}

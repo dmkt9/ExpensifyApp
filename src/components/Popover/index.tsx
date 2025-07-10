@@ -81,7 +81,7 @@ function Popover(props: PopoverProps) {
         );
     }
 
-    if (withoutOverlay && !shouldUseNarrowLayout) {
+    if (withoutOverlay && !isSmallScreenWidth) {
         return createPortal(
             <PopoverWithoutOverlay
                 // eslint-disable-next-line react/jsx-props-no-spreading
