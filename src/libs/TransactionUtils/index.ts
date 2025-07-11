@@ -17,6 +17,7 @@ import DistanceRequestUtils from '@libs/DistanceRequestUtils';
 import {toLocaleDigit} from '@libs/LocaleDigitUtils';
 import {translateLocal} from '@libs/Localize';
 import {rand64, roundToTwoDecimalPlaces} from '@libs/NumberUtils';
+import Parser from '@libs/Parser';
 import {getPersonalDetailByEmail} from '@libs/PersonalDetailsUtils';
 import {
     getCleanedTagName,
@@ -401,6 +402,11 @@ function getUpdatedTransaction({
         updatedTransaction.comment = {
             ...updatedTransaction.comment,
             comment: transactionChanges.comment,
+        };
+    } else if (updatedTransaction.comment?.comment) {
+        updatedTransaction.comment = {
+            ...updatedTransaction.comment,
+            comment: Parser.htmlToMarkdown(updatedTransaction.comment?.comment),
         };
     }
     if (Object.hasOwn(transactionChanges, 'created')) {
