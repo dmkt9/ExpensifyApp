@@ -151,6 +151,9 @@ function IOURequestStepParticipants({
         transactions.forEach((transaction) => {
             setCustomUnitRateID(transaction.transactionID, rateID);
             setMoneyRequestParticipantsFromReport(transaction.transactionID, selfDMReport);
+            if (selfDMReport?.reportID) {
+                setTransactionReport(transaction.transactionID, selfDMReport?.reportID, true);
+            }
         });
         const iouConfirmationPageRoute = ROUTES.MONEY_REQUEST_STEP_CONFIRMATION.getRoute(action, CONST.IOU.TYPE.TRACK, initialTransactionID, selfDMReportID);
         waitForKeyboardDismiss(() => {
