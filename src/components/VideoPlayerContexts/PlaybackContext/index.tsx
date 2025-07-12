@@ -26,8 +26,13 @@ function PlaybackContextProvider({children}: ChildrenProps) {
     const video = usePlaybackContextVideoRefs(resetContextProperties);
 
     const updateCurrentURLAndReportID: PlaybackContextValues['updateCurrentURLAndReportID'] = useCallback(
-        (url, reportID) => {
-            if (!url || !reportID) {
+        (url, reportIDParam) => {
+            if (!url) {
+                return;
+            }
+            const routeReportID = getCurrentRouteReportID(url);
+            const reportID = reportIDParam ?? routeReportID;
+            if (typeof reportID !== 'string') {
                 return;
             }
 
@@ -43,8 +48,6 @@ function PlaybackContextProvider({children}: ChildrenProps) {
             } else {
                 reportIDtoSet = reportID;
             }
-
-            const routeReportID = getCurrentRouteReportID(url);
 
             if (reportIDtoSet === routeReportID || routeReportID === NO_REPORT_ID_IN_PARAMS) {
                 setCurrentRouteReportID(reportIDtoSet);

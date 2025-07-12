@@ -585,6 +585,7 @@ function ReportActionCompose({
                             onModalShow={() => setIsAttachmentPreviewActive(true)}
                             onModalHide={onAttachmentPreviewClose}
                             shouldDisableSendButton={!!exceededMaxLength}
+                            report={report}
                         >
                             {({displayFilesInModal}) => {
                                 const handleAttachmentDrop = (event: DragEvent) => {
