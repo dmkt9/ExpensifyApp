@@ -1,9 +1,10 @@
 /* eslint-disable es/no-optional-chaining, es/no-nullish-coalescing-operators, react/prop-types */
 import type {ForwardedRef, MutableRefObject} from 'react';
 import React, {useCallback, useEffect, useMemo, useRef} from 'react';
-import type {FlatListProps, NativeScrollEvent, NativeSyntheticEvent} from 'react-native';
-import {FlatList} from 'react-native';
+import type {FlatListProps as FlatListType, MeasureInWindowOnSuccessCallback, NativeScrollEvent, NativeSyntheticEvent} from 'react-native';
+import {FlatList, View} from 'react-native';
 import {isMobileSafari} from '@libs/Browser';
+import type {FlatListWithMeasureType} from '@pages/home/ReportScreenContext';
 
 // Changing the scroll position during a momentum scroll does not work on mobile Safari.
 // We do a best effort to avoid content jumping by using some hacks on mobile Safari only.
@@ -40,10 +41,16 @@ function useMergeRefs(...args: Array<MutableRefObject<FlatList> | ForwardedRef<F
 function getScrollableNode(flatList: FlatList | null): HTMLElement | undefined {
     return flatList?.getScrollableNode() as HTMLElement | undefined;
 }
-
-function MVCPFlatList<TItem>({maintainVisibleContentPosition, horizontal = false, onScroll, ...props}: FlatListProps<TItem>, ref: ForwardedRef<FlatList>) {
+type FlatListProps<T> = FlatListType<T> & {
+    /**
+     * Determines whether flatList should expose the measureInWindow function.
+     * If true, it will be wrapped by the View and expose the measureInWindow function of this View.
+     */
+    shouldBeMeasured?: boolean;
+};
+function MVCPFlatList<TItem>({maintainVisibleContentPosition, horizontal = false, onScroll, shouldBeMeasured = false, ...props}: FlatListProps<TItem>, ref: ForwardedRef<FlatList>) {
     const {minIndexForVisible: mvcpMinIndexForVisible, autoscrollToTopThreshold: mvcpAutoscrollToTopThreshold} = maintainVisibleContentPosition ?? {};
-    const scrollRef = useRef<FlatList | null>(null);
+    const scrollRef = useRef<FlatListWithMeasureType | null>(null);
     const prevFirstVisibleOffsetRef = useRef(0);
     const firstVisibleViewRef = useRef<HTMLElement | null>(null);
     const mutationObserverRef = useRef<MutationObserver | null>(null);
@@ -230,7 +237,17 @@ function MVCPFlatList<TItem>({maintainVisibleContentPosition, horizontal = false
         [prepareForMaintainVisibleContentPosition, onScroll],
     );
 
-    return (
+    const mergeMeasureInWindowHandler = useCallback((view: View | null) => {
+        if (!view || !scrollRef.current) {
+            return;
+        }
+
+        scrollRef.current.measureInWindow = (callback: MeasureInWindowOnSuccessCallback) => {
+            view.measureInWindow(callback);
+        };
+    }, []);
+
+    const renderFlatList = () => (
         <FlatList
             // eslint-disable-next-line react/jsx-props-no-spreading
             {...props}
@@ -248,6 +265,19 @@ function MVCPFlatList<TItem>({maintainVisibleContentPosition, horizontal = false
                 props.onLayout?.(e);
             }}
         />
+    );
+
+    if (!shouldBeMeasured) {
+        return renderFlatList();
+    }
+
+    return (
+        <View
+            style={{flex: 1}}
+            ref={mergeMeasureInWindowHandler}
+        >
+            {renderFlatList()}
+        </View>
     );
 }
 

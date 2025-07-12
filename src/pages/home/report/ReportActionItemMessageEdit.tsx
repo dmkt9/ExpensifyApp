@@ -418,6 +418,17 @@ function ReportActionItemMessageEdit(
             <View
                 style={[styles.chatItemMessage, styles.flexRow]}
                 ref={containerRef}
+                onLayout={() => {
+                    containerRef.current?.measureInWindow((x, y, w, h) => {
+                        reportScrollManager.ref?.current?.measureInWindow?.((fx, fy, fw, fh) => {
+                            if (y <= fy) {
+                                reportScrollManager.ref?.current?.scrollToIndex({index, animated: true, viewPosition: 0});
+                            } else if (y + h >= fy + fh) {
+                                reportScrollManager.ref?.current?.scrollToIndex({index, animated: true, viewPosition: 1});
+                            }
+                        });
+                    });
+                }}
             >
                 <View
                     style={[
