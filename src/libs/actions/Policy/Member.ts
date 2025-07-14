@@ -15,7 +15,6 @@ import * as ApiUtils from '@libs/ApiUtils';
 import DateUtils from '@libs/DateUtils';
 import * as ErrorUtils from '@libs/ErrorUtils';
 import fileDownload from '@libs/fileDownload';
-import {translateLocal} from '@libs/Localize';
 import Log from '@libs/Log';
 import enhanceParameters from '@libs/Network/enhanceParameters';
 import Parser from '@libs/Parser';
@@ -205,7 +204,7 @@ function buildRoomMembersOnyxData(
 /**
  * Updates the import spreadsheet data according to the result of the import
  */
-function updateImportSpreadsheetData(addedMembersLength: number, updatedMembersLength: number): OnyxData {
+function updateImportSpreadsheetData(): OnyxData {
     const onyxData: OnyxData = {
         successData: [
             {
@@ -213,10 +212,7 @@ function updateImportSpreadsheetData(addedMembersLength: number, updatedMembersL
                 key: ONYXKEYS.IMPORTED_SPREADSHEET,
                 value: {
                     shouldFinalModalBeOpened: true,
-                    importFinalModal: {
-                        title: translateLocal('spreadsheet.importSuccessfulTitle'),
-                        prompt: translateLocal('spreadsheet.importMembersSuccessfulDescription', {added: addedMembersLength, updated: updatedMembersLength}),
-                    },
+                    importFinalModal: {title: 'spreadsheet.importSuccessfulTitle'},
                 },
             },
         ],
@@ -227,7 +223,7 @@ function updateImportSpreadsheetData(addedMembersLength: number, updatedMembersL
                 key: ONYXKEYS.IMPORTED_SPREADSHEET,
                 value: {
                     shouldFinalModalBeOpened: true,
-                    importFinalModal: {title: translateLocal('spreadsheet.importFailedTitle'), prompt: translateLocal('spreadsheet.importFailedDescription')},
+                    importFinalModal: {title: 'spreadsheet.importFailedTitle'},
                 },
             },
         ],
@@ -996,24 +992,7 @@ type PolicyMember = {
 };
 
 function importPolicyMembers(policyID: string, members: PolicyMember[]) {
-    // This will be fixed as part of https://github.com/Expensify/Expensify/issues/507850
-    // eslint-disable-next-line deprecation/deprecation
-    const policy = getPolicy(policyID);
-    const {added, updated} = members.reduce(
-        (acc, curr) => {
-            const employee = policy?.employeeList?.[curr.email];
-            if (employee) {
-                if (curr.role !== employee.role) {
-                    acc.updated++;
-                }
-            } else {
-                acc.added++;
-            }
-            return acc;
-        },
-        {added: 0, updated: 0},
-    );
-    const onyxData = updateImportSpreadsheetData(added, updated);
+    const onyxData = updateImportSpreadsheetData();
 
     const parameters = {
         policyID,

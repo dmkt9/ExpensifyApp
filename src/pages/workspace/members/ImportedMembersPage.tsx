@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useMemo, useRef, useState} from 'react';
 import ConfirmModal from '@components/ConfirmModal';
 import HeaderWithBackButton from '@components/HeaderWithBackButton';
 import type {ColumnRole} from '@components/ImportColumn';
@@ -29,6 +29,30 @@ function ImportedMembersPage({route}: ImportedMembersPageProps) {
     const {setIsClosing} = useCloseImportPage();
 
     const policyID = route.params.policyID;
+    const [employeeList = {}] = useOnyx(`${ONYXKEYS.COLLECTION.POLICY}${policyID}`, {canBeMissing: false, selector: (policy) => policy?.employeeList});
+    const employeeListRef = useRef(employeeList);
+    const {modalTitle, modalPrompt} = useMemo(() => {
+        if (!spreadsheet?.shouldFinalModalBeOpened) {
+            return {};
+        }
+
+        if (spreadsheet?.importFinalModal?.title === 'spreadsheet.importFailedTitle') {
+            return {modalTitle: translate('spreadsheet.importFailedTitle'), modalPrompt: translate('spreadsheet.importFailedDescription')};
+        }
+
+        let added = 0;
+        let updated = 0;
+        for (const [email, employee] of Object.entries(employeeList)) {
+            const previousEmployee = employeeListRef.current[email];
+            if (!previousEmployee) {
+                added++;
+            } else if (previousEmployee.role !== employee.role) {
+                updated++;
+            }
+        }
+
+        return {modalTitle: translate('spreadsheet.importSuccessfulTitle'), modalPrompt: translate('spreadsheet.importMembersSuccessfulDescription', {added, updated})};
+    }, [employeeList, spreadsheet, translate]);
 
     const columnNames = generateColumnNames(spreadsheet?.data?.length ?? 0);
     const {containsHeader = true} = spreadsheet ?? {};
@@ -128,8 +152,8 @@ function ImportedMembersPage({route}: ImportedMembersPageProps) {
 
             <ConfirmModal
                 isVisible={spreadsheet?.shouldFinalModalBeOpened}
-                title={spreadsheet?.importFinalModal?.title ?? ''}
-                prompt={spreadsheet?.importFinalModal?.prompt ?? ''}
+                title={modalTitle ?? ''}
+                prompt={modalPrompt ?? ''}
                 onConfirm={closeImportPageAndModal}
                 onCancel={closeImportPageAndModal}
                 confirmText={translate('common.buttonConfirm')}
