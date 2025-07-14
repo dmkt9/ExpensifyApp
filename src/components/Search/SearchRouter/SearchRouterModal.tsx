@@ -1,4 +1,5 @@
 import React, {useState} from 'react';
+import {InteractionManager} from 'react-native';
 import FocusTrapForModal from '@components/FocusTrap/FocusTrapForModal';
 import Modal from '@components/Modal';
 import ScreenWrapperContainer from '@components/ScreenWrapper/ScreenWrapperContainer';
@@ -15,12 +16,17 @@ function SearchRouterModal() {
     const {shouldUseNarrowLayout} = useResponsiveLayout();
     const {isSearchRouterDisplayed, closeSearchRouter} = useSearchRouterContext();
     const viewportOffsetTop = useViewportOffsetTop();
+    const [willBeNavigated, setWillBeNavigated] = useState(false);
 
     // On mWeb Safari, the input caret stuck for a moment while the modal is animating. So, we hide the caret until the animation is done.
     const [shouldHideInputCaret, setShouldHideInputCaret] = useState(isMobileWebIOS);
 
     const modalType = shouldUseNarrowLayout ? CONST.MODAL.MODAL_TYPE.CENTERED_SWIPEABLE_TO_RIGHT : CONST.MODAL.MODAL_TYPE.POPOVER;
     // For now were only enabling shouldUseReanimatedModal narrow layouts. On wide ones it's a popover and it is not migrated yet.
+    if (willBeNavigated) {
+        return null;
+    }
+
     return (
         <Modal
             type={modalType}
@@ -48,6 +54,13 @@ function SearchRouterModal() {
                         onRouterClose={closeSearchRouter}
                         shouldHideInputCaret={shouldHideInputCaret}
                         isSearchRouterDisplayed={isSearchRouterDisplayed}
+                        prepareNavigating={() => {
+                            setWillBeNavigated(true);
+                            InteractionManager.runAfterInteractions(() => {
+                                // reset value
+                                setWillBeNavigated(false);
+                            });
+                        }}
                     />
                 </FocusTrapForModal>
             </ScreenWrapperContainer>

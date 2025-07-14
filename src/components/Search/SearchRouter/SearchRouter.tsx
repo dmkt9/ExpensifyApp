@@ -77,9 +77,10 @@ type SearchRouterProps = {
     onRouterClose: () => void;
     shouldHideInputCaret?: TextInputProps['caretHidden'];
     isSearchRouterDisplayed?: boolean;
+    prepareNavigating: () => void;
 };
 
-function SearchRouter({onRouterClose, shouldHideInputCaret, isSearchRouterDisplayed}: SearchRouterProps, ref: React.Ref<View>) {
+function SearchRouter({onRouterClose, shouldHideInputCaret, isSearchRouterDisplayed, prepareNavigating}: SearchRouterProps, ref: React.Ref<View>) {
     const {translate} = useLocalize();
     const styles = useThemeStyles();
     const [, recentSearchesMetadata] = useOnyx(ONYXKEYS.RECENT_SEARCHES, {canBeMissing: true});
@@ -261,13 +262,14 @@ function SearchRouter({onRouterClose, shouldHideInputCaret, isSearchRouterDispla
 
             backHistory(() => {
                 onRouterClose();
+                prepareNavigating();
                 Navigation.navigate(ROUTES.SEARCH_ROOT.getRoute({query: updatedQuery}));
             });
 
             setTextInputValue('');
             setAutocompleteQueryValue('');
         },
-        [autocompleteSubstitutions, onRouterClose, setTextInputValue],
+        [autocompleteSubstitutions, prepareNavigating, onRouterClose, setTextInputValue],
     );
 
     const setTextAndUpdateSelection = useCallback(
@@ -382,6 +384,7 @@ function SearchRouter({onRouterClose, shouldHideInputCaret, isSearchRouterDispla
                     }
                 } else {
                     backHistory(() => {
+                        prepareNavigating();
                         if (item?.reportID) {
                             Navigation.navigate(ROUTES.REPORT_WITH_ID.getRoute(item.reportID));
                         } else if ('login' in item) {
@@ -412,7 +415,7 @@ function SearchRouter({onRouterClose, shouldHideInputCaret, isSearchRouterDispla
                 throw error;
             }
         },
-        [autocompleteSubstitutions, onRouterClose, onSearchQueryChange, submitSearch, textInputValue],
+        [autocompleteSubstitutions, onRouterClose, onSearchQueryChange, submitSearch, textInputValue, prepareNavigating],
     );
 
     const updateAutocompleteSubstitutions = useCallback(
