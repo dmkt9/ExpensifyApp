@@ -218,7 +218,7 @@ type PureReportActionItemProps = {
     isMostRecentIOUReportAction: boolean;
 
     /** Should we display the new marker on top of the comment? */
-    shouldDisplayNewMarker: boolean;
+    shouldDisplayNewMarker?: boolean;
 
     /** Determines if the avatar is displayed as a subscript (positioned lower than normal) */
     shouldShowSubscriptAvatar?: boolean;
@@ -380,7 +380,7 @@ function PureReportActionItem({
     index,
     isMostRecentIOUReportAction,
     parentReportAction,
-    shouldDisplayNewMarker,
+    shouldDisplayNewMarker = false,
     shouldHideThreadDividerLine = false,
     shouldShowSubscriptAvatar = false,
     onPress = undefined,
@@ -1465,7 +1465,7 @@ function PureReportActionItem({
             >
                 {(hovered) => (
                     <View style={highlightedBackgroundColorIfNeeded}>
-                        {unreadMarkerReportActionID === action.reportActionID && (!shouldUseThreadDividerLine || !isFirstVisibleReportAction) && (
+                        {(unreadMarkerReportActionID === action.reportActionID || shouldDisplayNewMarker) && (!shouldUseThreadDividerLine || !isFirstVisibleReportAction) && (
                             <UnreadActionIndicator reportActionID={action.reportActionID} />
                         )}
                         {shouldDisplayContextMenu && (

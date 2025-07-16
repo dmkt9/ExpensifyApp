@@ -45,7 +45,7 @@ type ReportActionsListItemRendererProps = {
     shouldHideThreadDividerLine: boolean;
 
     /** Should we display the new marker on top of the comment? */
-    shouldDisplayNewMarker: boolean;
+    shouldDisplayNewMarker?: boolean;
 
     /** Report action ID that was referenced in the deeplink to report  */
     linkedReportActionID?: string;
@@ -72,7 +72,7 @@ function ReportActionsListItemRenderer({
     displayAsGroup,
     mostRecentIOUReportActionID = '',
     shouldHideThreadDividerLine,
-    shouldDisplayNewMarker,
+    shouldDisplayNewMarker = false,
     linkedReportActionID = '',
     shouldDisplayReplyDivider,
     isFirstVisibleReportAction = false,
