@@ -4,11 +4,11 @@ import type {ReportAction} from '@src/types/onyx';
 
 type UnreadActionIndicatorContextType = {
     /**
-     * Whether the full screen loader is visible.
+     * reportActionID of the last unread reportAction.
      */
     unreadMarkerReportActionID: string | null;
     /**
-     * Set the full screen loader visibility.
+     * A callback function that sets a reportAction which already has a rendered component, instead of emptyHtml.
      */
     setReportActionHasComponentToDisplay: (reportActionID: string) => void;
 };
@@ -22,7 +22,7 @@ type UnreadActionIndicatorContextProviderProps = {
     sortedVisibleReportActions: ReportAction[];
     unreadMarkerReportActionID: string | null;
     /**
-     * The children of the full screen loader context provider.
+     * The children of the unreadAction indicator context provider.
      */
     children: ReactNode;
 };
