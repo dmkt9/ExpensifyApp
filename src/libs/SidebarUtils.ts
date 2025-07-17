@@ -314,6 +314,7 @@ function updateReportsToDisplayInLHN(
     updatedReportsKeys.forEach((reportID) => {
         const report = reports?.[reportID];
         if (!report) {
+            delete displayedReportsCopy[reportID];
             return;
         }
 

@@ -84,29 +84,42 @@ function SidebarOrderedReportsContextProvider({
 
         if (betas !== prevBetas || priorityMode !== prevPriorityMode) {
             reportsToUpdate = Object.keys(chatReports ?? {});
-        } else if (reportUpdates) {
-            reportsToUpdate = Object.keys(reportUpdates ?? {});
-        } else if (reportNameValuePairsUpdates) {
-            reportsToUpdate = Object.keys(reportNameValuePairsUpdates ?? {}).map((key) => key.replace(ONYXKEYS.COLLECTION.REPORT_NAME_VALUE_PAIRS, ONYXKEYS.COLLECTION.REPORT));
-        } else if (transactionsUpdates) {
-            reportsToUpdate = Object.values(transactionsUpdates ?? {}).map((transaction) => `${ONYXKEYS.COLLECTION.REPORT}${transaction?.reportID}`);
-        } else if (transactionViolationsUpdates) {
-            reportsToUpdate = Object.keys(transactionViolationsUpdates ?? {})
-                .map((key) => key.replace(ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS, ONYXKEYS.COLLECTION.TRANSACTION))
-                .map((key) => `${ONYXKEYS.COLLECTION.REPORT}${transactions?.[key]?.reportID}`);
-        } else if (reportsDraftsUpdates) {
-            reportsToUpdate = Object.keys(reportsDraftsUpdates).map((key) => key.replace(ONYXKEYS.COLLECTION.REPORT_DRAFT_COMMENT, ONYXKEYS.COLLECTION.REPORT));
-        } else if (policiesUpdates) {
-            const updatedPolicies = Object.keys(policiesUpdates).map((key) => key.replace(ONYXKEYS.COLLECTION.POLICY, ''));
-            reportsToUpdate = Object.entries(chatReports ?? {})
-                .filter(([, value]) => {
-                    if (!value?.policyID) {
-                        return;
-                    }
+        } else {
+            // eslint-disable-next-line no-lonely-if
+            if (reportUpdates) {
+                reportsToUpdate.push(...Object.keys(reportUpdates ?? {}));
+            }
+            if (reportNameValuePairsUpdates) {
+                reportsToUpdate.push(...Object.keys(reportNameValuePairsUpdates ?? {}).map((key) => key.replace(ONYXKEYS.COLLECTION.REPORT_NAME_VALUE_PAIRS, ONYXKEYS.COLLECTION.REPORT)));
+            }
+            if (transactionsUpdates) {
+                reportsToUpdate.push(...Object.values(transactionsUpdates ?? {}).map((transaction) => `${ONYXKEYS.COLLECTION.REPORT}${transaction?.reportID}`));
+            }
+            if (transactionViolationsUpdates) {
+                reportsToUpdate.push(
+                    ...Object.keys(transactionViolationsUpdates ?? {})
+                        .map((key) => key.replace(ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS, ONYXKEYS.COLLECTION.TRANSACTION))
+                        .map((key) => `${ONYXKEYS.COLLECTION.REPORT}${transactions?.[key]?.reportID}`),
+                );
+            }
+            if (reportsDraftsUpdates) {
+                reportsToUpdate.push(...Object.keys(reportsDraftsUpdates).map((key) => key.replace(ONYXKEYS.COLLECTION.REPORT_DRAFT_COMMENT, ONYXKEYS.COLLECTION.REPORT)));
+            }
+            if (policiesUpdates) {
+                const updatedPolicies = Object.keys(policiesUpdates).map((key) => key.replace(ONYXKEYS.COLLECTION.POLICY, ''));
+                reportsToUpdate.push(
+                    ...Object.entries(chatReports ?? {})
+                        .filter(([, value]) => {
+                            if (!value?.policyID) {
+                                return;
+                            }
 
-                    return updatedPolicies.includes(value.policyID);
-                })
-                .map(([key]) => key);
+                            return updatedPolicies.includes(value.policyID);
+                        })
+                        .map(([key]) => key),
+                );
+            }
+            reportsToUpdate = [...new Set(reportsToUpdate)];
         }
 
         // Make sure the previous and current reports are always included in the updates when we switch reports.
