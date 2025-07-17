@@ -1,3 +1,4 @@
+import {useIsFocused} from '@react-navigation/native';
 import React, {createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState} from 'react';
 import {View} from 'react-native';
 import Button from '@components/Button';
@@ -255,9 +256,10 @@ const useProductTrainingContext = (tooltipName: ProductTrainingTooltipName, shou
      */
     useLayoutEffect(parseFSAttributes, []);
 
+    const isFocused = useIsFocused();
     const shouldShowProductTrainingTooltip = useMemo(() => {
-        return shouldShow && shouldRenderTooltip(tooltipName) && !shouldHideToolTip;
-    }, [shouldRenderTooltip, tooltipName, shouldShow, shouldHideToolTip]);
+        return shouldShow && shouldRenderTooltip(tooltipName) && !shouldHideToolTip && isFocused;
+    }, [shouldRenderTooltip, tooltipName, shouldShow, shouldHideToolTip, isFocused]);
 
     const hideTooltip = useCallback(
         (isDismissedUsingCloseButton = false) => {
