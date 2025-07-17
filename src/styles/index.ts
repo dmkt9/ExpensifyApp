@@ -636,6 +636,7 @@ const styles = (theme: ThemeColors) =>
             // There is a missing border right on the wide layout
             borderRightWidth: shouldUseNarrowLayout ? 0 : 1,
             borderColor: theme.border,
+            userSelect: 'none',
         }),
 
         navigationTabBarContainer: {
