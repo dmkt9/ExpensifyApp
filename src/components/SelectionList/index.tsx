@@ -1,6 +1,7 @@
 import React, {forwardRef, useEffect, useState} from 'react';
 import type {ForwardedRef} from 'react';
 import {Keyboard} from 'react-native';
+import blurActiveElement from '@libs/Accessibility/blurActiveElement';
 import {isMobileChrome} from '@libs/Browser';
 import {canUseTouchScreen} from '@libs/DeviceCapabilities';
 import CONST from '@src/CONST';
@@ -51,6 +52,7 @@ function SelectionList<TItem extends ListItem>({onScroll, ...props}: SelectionLi
         document.addEventListener('keyup', checkShouldDebounceScrolling, {passive: true});
 
         return () => {
+            blurActiveElement();
             document.removeEventListener('keydown', checkShouldDebounceScrolling);
             document.removeEventListener('keyup', checkShouldDebounceScrolling);
         };
