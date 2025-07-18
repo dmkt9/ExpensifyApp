@@ -947,12 +947,30 @@ const isCurrentTimeWithinRange = (startTime: string, endTime: string): boolean =
     return isAfter(now, new Date(startTime)) && isBefore(now, new Date(endTime));
 };
 
+const safeParse: typeof parse = (dateStr, formatString, referenceDate, options?) => {
+    const parsedDate = parse(dateStr, formatString, referenceDate, options);
+    if (!isValid(parsedDate)) {
+        Log.warn('something');
+        return new Date(dateStr) as typeof parsedDate;
+    }
+    return parsedDate;
+};
+
+const safeFormat: typeof format = (date, formatStr, options?) => {
+    try {
+        return format(date, formatStr, options);
+    } catch (e) {
+        Log.warn('something');
+        return 'Invalid Date'; // or something else
+    }
+};
+
 /**
  * Converts a date to a string in the format MMMM d, yyyy
  */
 const formatToReadableString = (date: string): string => {
-    const parsedDate = parse(date, 'yyyy-MM-dd', new Date());
-    return format(parsedDate, 'MMMM d, yyyy');
+    const parsedDate = safeParse(date, 'yyyy-MM-dd', new Date());
+    return safeFormat(parsedDate, 'MMMM d, yyyy');
 };
 
 const formatInTimeZoneWithFallback: typeof formatInTimeZone = (date, timeZone, formatStr, options?) => {
