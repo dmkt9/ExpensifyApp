@@ -1131,7 +1131,7 @@ function MoneyReportHeader({
                 onConfirm={() => {
                     setIsDeleteReportModalVisible(false);
 
-                    Navigation.goBack();
+                    onBackButtonPress();
                     InteractionManager.runAfterInteractions(() => {
                         deleteAppReport(moneyRequestReport?.reportID);
                     });

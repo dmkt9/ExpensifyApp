@@ -854,7 +854,13 @@ function MoneyRequestView({allReports, report, policy, shouldShowAnimatedBackgro
                                     return;
                                 }
                                 Navigation.navigate(
-                                    ROUTES.MONEY_REQUEST_STEP_REPORT.getRoute(CONST.IOU.ACTION.EDIT, iouType, transaction?.transactionID, report.reportID, getReportRHPActiveRoute()),
+                                    ROUTES.MONEY_REQUEST_STEP_REPORT.getRoute(
+                                        CONST.IOU.ACTION.EDIT,
+                                        iouType,
+                                        transaction?.transactionID,
+                                        report.reportID,
+                                        getReportRHPActiveRoute() || Navigation.getActiveRoute(),
+                                    ),
                                 );
                             }}
                             interactive={canEditReport}

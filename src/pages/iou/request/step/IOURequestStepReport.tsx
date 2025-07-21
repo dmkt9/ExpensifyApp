@@ -1,3 +1,4 @@
+import {findFocusedRoute, getStateFromPath} from '@react-navigation/native';
 import React from 'react';
 import type {ListItem} from '@components/SelectionList/types';
 import useOnyx from '@hooks/useOnyx';
@@ -7,6 +8,7 @@ import {getReportOrDraftReport} from '@libs/ReportUtils';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
+import type {Route} from '@src/ROUTES';
 import type SCREENS from '@src/SCREENS';
 import IOURequestEditReportCommon from './IOURequestEditReportCommon';
 import withFullTransactionOrNotFound from './withFullTransactionOrNotFound';
@@ -33,7 +35,17 @@ function IOURequestStepReport({route, transaction}: IOURequestStepReportProps) {
 
     const handleGoBackWithReportID = (id: string) => {
         if (isEditing) {
-            Navigation.dismissModalWithReport({reportID: id});
+            // eslint-disable-next-line no-undef-init
+            let newBackTo: Route | undefined = undefined;
+            const state = getStateFromPath(backTo);
+            if (state) {
+                const focusedRoute = findFocusedRoute(state);
+                if (focusedRoute?.params && 'backTo' in focusedRoute.params) {
+                    newBackTo = focusedRoute?.params.backTo as Route;
+                }
+            }
+
+            Navigation.dismissModalWithReport({reportID: id, backTo: newBackTo});
         } else {
             Navigation.goBack(backTo);
         }
