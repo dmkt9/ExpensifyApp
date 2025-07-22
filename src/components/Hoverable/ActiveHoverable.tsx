@@ -92,6 +92,20 @@ function ActiveHoverable({onHoverIn, onHoverOut, shouldHandleScroll, shouldFreez
         [shouldFreezeCapture, updateIsHovered],
     );
 
+    const mouseMoveInElementRef = useRef(false);
+    useEffect(() => {
+        const handleMouseMove = () => {
+            if (!mouseMoveInElementRef.current) {
+                handleMouseEvents('leave')();
+            }
+            mouseMoveInElementRef.current = false;
+        };
+        document.addEventListener('mousemove', handleMouseMove, {passive: true});
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+        };
+    }, [handleMouseEvents]);
+
     const child = useMemo(() => getReturnValue(children, isHovered), [children, isHovered]);
 
     const {onMouseEnter, onMouseLeave} = child.props as OnMouseEvents;
@@ -105,6 +119,9 @@ function ActiveHoverable({onHoverIn, onHoverOut, shouldHandleScroll, shouldFreez
         onMouseLeave: (e: React.MouseEvent) => {
             handleMouseEvents('leave')();
             onMouseLeave?.(e);
+        },
+        onMouseMove: () => {
+            mouseMoveInElementRef.current = true;
         },
     } as React.HTMLAttributes<HTMLElement>);
 }
