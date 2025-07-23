@@ -1203,7 +1203,6 @@ function getSendMoneyFlowAction(actions: OnyxEntry<ReportActions> | ReportAction
     if (iouActions.length !== 1) {
         return undefined;
     }
-
     // ...which is 'pay'...
     const isFirstActionPay = getOriginalMessage(iouActions.at(0))?.type === CONST.IOU.REPORT_ACTION_TYPE.PAY;
 
@@ -1212,7 +1211,23 @@ function getSendMoneyFlowAction(actions: OnyxEntry<ReportActions> | ReportAction
     // ...and can only be triggered on DM chats
     const isDM = type === CONST.REPORT.TYPE.CHAT && !chatType && !(parentReportID && parentReportActionID);
 
-    return isFirstActionPay && isDM ? iouActions.at(0) : undefined;
+    let iouMovedFromDM = false;
+    const movedActions = Object.values(actions ?? {}).filter(
+        (action) => isActionOfType(action, CONST.REPORT.ACTIONS.TYPE.MOVED) || isActionOfType(action, CONST.REPORT.ACTIONS.TYPE.CHANGE_POLICY),
+    );
+    movedActions.forEach((action) => {
+        const originalMessage = getOriginalMessage(action);
+        if (!originalMessage || !('fromPolicy' in originalMessage)) {
+            return;
+        }
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        const fromPolicy = getPolicy(originalMessage?.fromPolicy);
+        if (!fromPolicy || fromPolicy.type === CONST.POLICY.TYPE.PERSONAL) {
+            iouMovedFromDM = true;
+        }
+    });
+
+    return isFirstActionPay && (isDM || iouMovedFromDM) ? iouActions.at(0) : undefined;
 }
 
 /** Whether action has no linked report by design */
