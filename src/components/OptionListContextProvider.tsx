@@ -50,6 +50,7 @@ function OptionsListContextProvider({children}: OptionsListProviderProps) {
     const [reportAttributes] = useOnyx(ONYXKEYS.DERIVED.REPORT_ATTRIBUTES, {canBeMissing: true});
     const prevReportAttributesLocale = usePrevious(reportAttributes?.locale);
     const [reports, {sourceValue: changedReports}] = useOnyx(ONYXKEYS.COLLECTION.REPORT, {canBeMissing: true});
+    const [, {sourceValue: changedPolicies}] = useOnyx(ONYXKEYS.COLLECTION.POLICY, {canBeMissing: true});
     const [, {sourceValue: changedReportActions}] = useOnyx(ONYXKEYS.COLLECTION.REPORT_ACTIONS, {canBeMissing: true});
     const personalDetails = usePersonalDetails();
     const prevPersonalDetails = usePrevious(personalDetails);
@@ -95,8 +96,15 @@ function OptionsListContextProvider({children}: OptionsListProviderProps) {
                 result[key] = report;
             }
         });
+        const changedPolicyIDSet = new Set(Object.values(changedPolicies ?? {}).map((policy) => policy?.id));
+        Object.values(reports ?? {}).forEach((report) => {
+            if (!report?.policyID || !changedPolicyIDSet.has(report.policyID)) {
+                return;
+            }
+            result[report.reportID] = report;
+        });
         return result;
-    }, [changedReports, reports]);
+    }, [changedReports, reports, changedPolicies]);
 
     /**
      * This effect is responsible for updating the options only for changed reports
