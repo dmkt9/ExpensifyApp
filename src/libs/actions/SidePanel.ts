@@ -10,7 +10,7 @@ import ONYXKEYS from '@src/ONYXKEYS';
  *
  * @param shouldOpenOnNarrowScreen - Whether to open the side panel on narrow screen
  */
-function openSidePanel(shouldOpenOnNarrowScreen: boolean) {
+function openSidePanel(shouldOpenOnNarrowScreen: boolean, shouldSync = false) {
     const optimisticData: OnyxUpdate[] = [
         {
             key: ONYXKEYS.NVP_SIDE_PANEL,
@@ -18,6 +18,11 @@ function openSidePanel(shouldOpenOnNarrowScreen: boolean) {
             value: shouldOpenOnNarrowScreen ? {open: true, openNarrowScreen: true} : {open: true},
         },
     ];
+
+    if (!shouldSync) {
+        Onyx.update(optimisticData);
+        return;
+    }
 
     const params: OpenSidePanelParams = {isNarrowScreen: shouldOpenOnNarrowScreen};
 
@@ -29,7 +34,7 @@ function openSidePanel(shouldOpenOnNarrowScreen: boolean) {
  *
  * @param shouldCloseOnNarrowScreen - Whether to close the side panel on narrow screen
  */
-function closeSidePanel(shouldCloseOnNarrowScreen: boolean) {
+function closeSidePanel(shouldCloseOnNarrowScreen: boolean, shouldSync = false) {
     const optimisticData: OnyxUpdate[] = [
         {
             key: ONYXKEYS.NVP_SIDE_PANEL,
@@ -37,6 +42,11 @@ function closeSidePanel(shouldCloseOnNarrowScreen: boolean) {
             value: shouldCloseOnNarrowScreen ? {openNarrowScreen: false} : {open: false},
         },
     ];
+
+    if (!shouldSync) {
+        Onyx.update(optimisticData);
+        return;
+    }
 
     const params: CloseSidePanelParams = {isNarrowScreen: shouldCloseOnNarrowScreen};
 
