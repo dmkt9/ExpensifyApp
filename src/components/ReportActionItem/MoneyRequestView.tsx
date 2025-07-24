@@ -370,6 +370,10 @@ function MoneyRequestView({allReports, report, policy, shouldShowAnimatedBackgro
                 }
             }
 
+            if (field === 'category' && !!policy?.requiresCategory && isCategoryMissing(updatedTransaction?.category ?? categoryForDisplay)) {
+                return translate('violations.missingCategory');
+            }
+
             return '';
         },
         [
@@ -389,6 +393,9 @@ function MoneyRequestView({allReports, report, policy, shouldShowAnimatedBackgro
             canEditMerchant,
             canEdit,
             isCustomUnitOutOfPolicy,
+            policy,
+            updatedTransaction,
+            categoryForDisplay,
         ],
     );
 
