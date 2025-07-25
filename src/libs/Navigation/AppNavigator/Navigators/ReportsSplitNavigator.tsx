@@ -5,13 +5,15 @@ import FreezeWrapper from '@libs/Navigation/AppNavigator/FreezeWrapper';
 import useSplitNavigatorScreenOptions from '@libs/Navigation/AppNavigator/useSplitNavigatorScreenOptions';
 import getCurrentUrl from '@libs/Navigation/currentUrl';
 import shouldOpenOnAdminRoom from '@libs/Navigation/helpers/shouldOpenOnAdminRoom';
+import navigationRef from '@libs/Navigation/navigationRef';
 import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavigation/types';
 import type {AuthScreensParamList, ReportsSplitNavigatorParamList} from '@libs/Navigation/types';
 import * as ReportUtils from '@libs/ReportUtils';
 import CONST from '@src/CONST';
-import type NAVIGATORS from '@src/NAVIGATORS';
+import NAVIGATORS from '@src/NAVIGATORS';
 import SCREENS from '@src/SCREENS';
 import type ReactComponentModule from '@src/types/utils/ReactComponentModule';
+import {getPreservedNavigatorState} from '../createSplitNavigator/usePreserveNavigatorState';
 
 const loadReportScreen = () => require<ReactComponentModule>('@pages/home/ReportScreen').default;
 const loadSidebarScreen = () => require<ReactComponentModule>('@pages/home/sidebar/BaseSidebarScreen').default;
@@ -31,7 +33,16 @@ function ReportsSplitNavigator({route}: PlatformStackScreenProps<AuthScreensPara
         if (reportIdFromPath) {
             return reportIdFromPath;
         }
-
+        const rootState = navigationRef.getRootState();
+        const preReportNavigator = rootState.routes.filter((r) => r.name === NAVIGATORS.REPORTS_SPLIT_NAVIGATOR).at(-2);
+        const preReportNavigatorState = preReportNavigator && preReportNavigator.key ? getPreservedNavigatorState(preReportNavigator?.key) : undefined;
+        const preReportRoute = preReportNavigatorState?.routes.findLast((r) => r.name === SCREENS.REPORT);
+        if (preReportRoute) {
+            const {reportID} = preReportRoute.params as ReportsSplitNavigatorParamList[typeof SCREENS.REPORT];
+            if (reportID) {
+                return reportID;
+            }
+        }
         const initialReport = ReportUtils.findLastAccessedReport(!isBetaEnabled(CONST.BETAS.DEFAULT_ROOMS), shouldOpenOnAdminRoom());
         // eslint-disable-next-line rulesdir/no-default-id-values
         return initialReport?.reportID ?? '';
