@@ -5,6 +5,7 @@ import type {ForwardedRef} from 'react';
 import React, {forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState} from 'react';
 import type {
     LayoutChangeEvent,
+    MeasureInWindowOnSuccessCallback,
     NativeSyntheticEvent,
     SectionList as RNSectionList,
     TextInput as RNTextInput,
@@ -149,6 +150,7 @@ function BaseSelectionList<TItem extends ListItem>(
         selectedItems = [],
         isSelected,
         canShowProductTrainingTooltip,
+        allowMeasurement = false,
     }: SelectionListProps<TItem>,
     ref: ForwardedRef<SelectionListHandle>,
 ) {
@@ -342,6 +344,24 @@ function BaseSelectionList<TItem extends ListItem>(
             listRef.current.scrollToLocation({sectionIndex, itemIndex, animated, viewOffset: variables.contentHeaderHeight - viewOffsetToKeepFocusedItemAtTopOfViewableArea});
         },
 
+        // eslint-disable-next-line react-compiler/react-compiler, react-hooks/exhaustive-deps
+        [flattenedSections.allOptions],
+    );
+
+    const scrollToIndexAtBottom = useCallback(
+        (index: number, animated = true) => {
+            const item = flattenedSections.allOptions.at(index);
+            const sectionIndex = item?.sectionIndex ?? -1;
+
+            if (!listRef.current || typeof item?.index === 'undefined' || index === -1 || sectionIndex === -1) {
+                return;
+            }
+
+            const sectionHeaderNum = sectionIndex + 1;
+            // list header + section header + item index
+            const itemIndex = item.index + sectionHeaderNum + 1;
+            listRef.current?.scrollToLocation({sectionIndex, itemIndex, animated, viewPosition: 1});
+        },
         // eslint-disable-next-line react-compiler/react-compiler, react-hooks/exhaustive-deps
         [flattenedSections.allOptions],
     );
@@ -846,11 +866,36 @@ function BaseSelectionList<TItem extends ListItem>(
     const updateExternalTextInputFocus = useCallback((isTextInputFocused: boolean) => {
         isTextInputFocusedRef.current = isTextInputFocused;
     }, []);
+    const sectionListViewWrapperRef = useRef<View>(null);
+
+    const measureInWindow = useCallback((callback: MeasureInWindowOnSuccessCallback) => {
+        sectionListViewWrapperRef.current?.measureInWindow(callback);
+    }, []);
 
     useImperativeHandle(
         ref,
-        () => ({scrollAndHighlightItem, clearInputAfterSelect, updateAndScrollToFocusedIndex, updateExternalTextInputFocus, scrollToIndex, getFocusedOption, focusTextInput}),
-        [scrollAndHighlightItem, clearInputAfterSelect, updateAndScrollToFocusedIndex, updateExternalTextInputFocus, scrollToIndex, getFocusedOption, focusTextInput],
+        () => ({
+            scrollAndHighlightItem,
+            clearInputAfterSelect,
+            updateAndScrollToFocusedIndex,
+            updateExternalTextInputFocus,
+            scrollToIndex,
+            getFocusedOption,
+            focusTextInput,
+            scrollToIndexAtBottom,
+            measureInWindow,
+        }),
+        [
+            scrollAndHighlightItem,
+            clearInputAfterSelect,
+            updateAndScrollToFocusedIndex,
+            updateExternalTextInputFocus,
+            scrollToIndex,
+            getFocusedOption,
+            focusTextInput,
+            scrollToIndexAtBottom,
+            measureInWindow,
+        ],
     );
 
     /** Selects row when pressing Enter */
@@ -909,62 +954,73 @@ function BaseSelectionList<TItem extends ListItem>(
             ) : (
                 <>
                     {!listHeaderContent && header()}
-                    <SectionList
-                        removeClippedSubviews={removeClippedSubviews}
-                        ref={listRef}
-                        sections={slicedSections}
-                        stickySectionHeadersEnabled={false}
-                        renderSectionHeader={(arg) => (
-                            <>
-                                {renderSectionHeader(arg)}
-                                {listHeaderContent && header()}
-                            </>
-                        )}
-                        renderItem={renderItem}
-                        getItemLayout={getItemLayout}
-                        onScroll={onScroll}
-                        onScrollBeginDrag={onScrollBeginDrag}
-                        onContentSizeChange={onContentSizeChange}
-                        keyExtractor={(item, index) => item.keyForList ?? `${index}`}
-                        extraData={focusedIndex}
-                        // the only valid values on the new arch are "white", "black", and "default", other values will cause a crash
-                        indicatorStyle="white"
-                        keyboardShouldPersistTaps="always"
-                        showsVerticalScrollIndicator={showScrollIndicator}
-                        initialNumToRender={initialNumToRender}
-                        maxToRenderPerBatch={maxToRenderPerBatch}
-                        windowSize={windowSize}
-                        updateCellsBatchingPeriod={updateCellsBatchingPeriod}
-                        viewabilityConfig={{viewAreaCoveragePercentThreshold: 95}}
-                        testID="selection-list"
-                        onLayout={onSectionListLayout}
-                        style={[(!maxToRenderPerBatch || (shouldHideListOnInitialRender && isInitialSectionListRender)) && styles.opacity0, sectionListStyle]}
-                        ListHeaderComponent={
-                            shouldShowTextInput && shouldShowTextInputAfterHeader ? (
+                    {(allowMeasurement
+                        ? (child: React.ReactNode) => (
+                              <View
+                                  style={styles.flex1}
+                                  ref={sectionListViewWrapperRef}
+                              >
+                                  {child}
+                              </View>
+                          )
+                        : (child: React.ReactNode) => child)(
+                        <SectionList
+                            removeClippedSubviews={removeClippedSubviews}
+                            ref={listRef}
+                            sections={slicedSections}
+                            stickySectionHeadersEnabled={false}
+                            renderSectionHeader={(arg) => (
                                 <>
-                                    {listHeaderContent}
-                                    {renderInput()}
-                                    {shouldShowHeaderMessageAfterHeader && headerMessageContent()}
+                                    {renderSectionHeader(arg)}
+                                    {listHeaderContent && header()}
                                 </>
-                            ) : (
-                                listHeaderContent
-                            )
-                        }
-                        scrollEnabled={scrollEnabled}
-                        ListFooterComponent={
-                            <>
-                                {footerContentAbovePagination}
-                                {listFooterContent ?? ShowMoreButtonInstance}
-                            </>
-                        }
-                        onEndReached={onEndReached}
-                        onEndReachedThreshold={onEndReachedThreshold}
-                        scrollEventThrottle={scrollEventThrottle}
-                        addBottomSafeAreaPadding={!shouldHideContentBottomSafeAreaPadding && addBottomSafeAreaPadding}
-                        addOfflineIndicatorBottomSafeAreaPadding={!shouldHideContentBottomSafeAreaPadding && addOfflineIndicatorBottomSafeAreaPadding}
-                        contentContainerStyle={contentContainerStyle}
-                        CellRendererComponent={shouldPreventActiveCellVirtualization ? FocusAwareCellRendererComponent : undefined}
-                    />
+                            )}
+                            renderItem={renderItem}
+                            getItemLayout={getItemLayout}
+                            onScroll={onScroll}
+                            onScrollBeginDrag={onScrollBeginDrag}
+                            onContentSizeChange={onContentSizeChange}
+                            keyExtractor={(item, index) => item.keyForList ?? `${index}`}
+                            extraData={focusedIndex}
+                            // the only valid values on the new arch are "white", "black", and "default", other values will cause a crash
+                            indicatorStyle="white"
+                            keyboardShouldPersistTaps="always"
+                            showsVerticalScrollIndicator={showScrollIndicator}
+                            initialNumToRender={initialNumToRender}
+                            maxToRenderPerBatch={maxToRenderPerBatch}
+                            windowSize={windowSize}
+                            updateCellsBatchingPeriod={updateCellsBatchingPeriod}
+                            viewabilityConfig={{viewAreaCoveragePercentThreshold: 95}}
+                            testID="selection-list"
+                            onLayout={onSectionListLayout}
+                            style={[(!maxToRenderPerBatch || (shouldHideListOnInitialRender && isInitialSectionListRender)) && styles.opacity0, sectionListStyle]}
+                            ListHeaderComponent={
+                                shouldShowTextInput && shouldShowTextInputAfterHeader ? (
+                                    <>
+                                        {listHeaderContent}
+                                        {renderInput()}
+                                        {shouldShowHeaderMessageAfterHeader && headerMessageContent()}
+                                    </>
+                                ) : (
+                                    listHeaderContent
+                                )
+                            }
+                            scrollEnabled={scrollEnabled}
+                            ListFooterComponent={
+                                <>
+                                    {footerContentAbovePagination}
+                                    {listFooterContent ?? ShowMoreButtonInstance}
+                                </>
+                            }
+                            onEndReached={onEndReached}
+                            onEndReachedThreshold={onEndReachedThreshold}
+                            scrollEventThrottle={scrollEventThrottle}
+                            addBottomSafeAreaPadding={!shouldHideContentBottomSafeAreaPadding && addBottomSafeAreaPadding}
+                            addOfflineIndicatorBottomSafeAreaPadding={!shouldHideContentBottomSafeAreaPadding && addOfflineIndicatorBottomSafeAreaPadding}
+                            contentContainerStyle={contentContainerStyle}
+                            CellRendererComponent={shouldPreventActiveCellVirtualization ? FocusAwareCellRendererComponent : undefined}
+                        />,
+                    )}
                     {children}
                 </>
             )}

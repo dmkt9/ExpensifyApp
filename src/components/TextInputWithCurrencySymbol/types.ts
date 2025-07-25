@@ -33,6 +33,11 @@ type BaseTextInputWithCurrencySymbolProps = {
     onBlur?: ((e: NativeSyntheticEvent<TextInputFocusEventData>) => void) | undefined;
 
     /**
+     * Callback that is called when the text input is focus
+     */
+    onFocus?: ((e: NativeSyntheticEvent<TextInputFocusEventData>) => void) | undefined;
+
+    /**
      * Callback that is called when the text input is pressed down
      */
     onMouseDown?: ((e: React.MouseEvent) => void) | undefined;

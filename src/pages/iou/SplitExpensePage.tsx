@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef} from 'react';
 import {InteractionManager, Keyboard, View} from 'react-native';
 import FullPageNotFoundView from '@components/BlockingViews/FullPageNotFoundView';
 import Button from '@components/Button';
@@ -9,7 +9,8 @@ import ScreenWrapper from '@components/ScreenWrapper';
 import {useSearchContext} from '@components/Search/SearchContext';
 import SelectionList from '@components/SelectionList';
 import SplitListItem from '@components/SelectionList/SplitListItem';
-import type {SectionListDataType, SplitListItemType} from '@components/SelectionList/types';
+import type {SectionListDataType, SelectionListHandle, SplitListItemType} from '@components/SelectionList/types';
+import isTextInputFocused from '@components/TextInput/BaseTextInput/isTextInputFocused';
 import useLocalize from '@hooks/useLocalize';
 import useOnyx from '@hooks/useOnyx';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
@@ -93,13 +94,15 @@ function SplitExpensePage({route}: SplitExpensePageProps) {
     );
 
     const getTranslatedText = useCallback((item: TranslationPathOrText) => (item.translationPath ? translate(item.translationPath) : (item.text ?? '')), [translate]);
+    const listRef = useRef<SelectionListHandle>(null);
+    const scrollFocusedSectionItemIntoViewRef = useRef<() => void>(() => {});
 
     const [sections] = useMemo(() => {
         const dotSeparator: TranslationPathOrText = {text: ` ${CONST.DOT_SEPARATOR} `};
         const isTransactionMadeWithCard = isCardTransaction(transaction);
         const showCashOrCard: TranslationPathOrText = {translationPath: isTransactionMadeWithCard ? 'iou.card' : 'iou.cash'};
 
-        const items: SplitListItemType[] = (draftTransaction?.comment?.splitExpenses ?? []).map((item): SplitListItemType => {
+        const items: SplitListItemType[] = (draftTransaction?.comment?.splitExpenses ?? []).map((item, index): SplitListItemType => {
             const previewHeaderText: TranslationPathOrText[] = [showCashOrCard];
 
             const date = DateUtils.formatWithUTCTimeZone(
@@ -124,6 +127,26 @@ function SplitExpensePage({route}: SplitExpensePageProps) {
                 onSplitExpenseAmountChange,
                 isTransactionLinked: splitExpenseTransactionID === item.transactionID,
                 keyForList: item?.transactionID,
+                onAmountInputFocus: (amountInputRef, splitListItemContainerRef) => {
+                    const scrollHandler = () => {
+                        // Only scroll when amount text input is in focus, avoid unwanted scrolling in other layout changes
+                        if (!isTextInputFocused(amountInputRef)) {
+                            return;
+                        }
+
+                        splitListItemContainerRef.current?.measureInWindow((x, y, w, h) => {
+                            // eslint-disable-next-line rulesdir/prefer-early-return
+                            listRef.current?.measureInWindow((fx, fy, fw, fh) => {
+                                if (y + h > fy + fh) {
+                                    listRef.current?.scrollToIndexAtBottom(index, true);
+                                }
+                            });
+                        });
+                    };
+
+                    scrollFocusedSectionItemIntoViewRef.current = scrollHandler;
+                    scrollHandler();
+                },
             };
         });
 
@@ -214,6 +237,9 @@ function SplitExpensePage({route}: SplitExpensePageProps) {
                         shouldSingleExecuteRowSelect
                         canSelectMultiple={false}
                         shouldPreventDefaultFocusOnSelectRow
+                        ref={listRef}
+                        onLayout={() => scrollFocusedSectionItemIntoViewRef.current()}
+                        allowMeasurement
                     />
                 </View>
             </FullPageNotFoundView>

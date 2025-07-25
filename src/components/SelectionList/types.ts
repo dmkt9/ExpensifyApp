@@ -1,8 +1,9 @@
-import type {MutableRefObject, ReactElement, ReactNode} from 'react';
+import type {MutableRefObject, ReactElement, ReactNode, RefObject} from 'react';
 import type {
     GestureResponderEvent,
     InputModeOptions,
     LayoutChangeEvent,
+    MeasureInWindowOnSuccessCallback,
     NativeScrollEvent,
     NativeSyntheticEvent,
     SectionListData,
@@ -10,12 +11,14 @@ import type {
     TargetedEvent,
     TextInput,
     TextStyle,
+    View,
     ViewStyle,
 } from 'react-native';
 import type {OnyxCollection, OnyxEntry} from 'react-native-onyx';
 import type {AnimatedStyle} from 'react-native-reanimated';
 import type {SearchRouterItem} from '@components/Search/SearchAutocompleteList';
 import type {SearchColumnType, SearchGroupBy} from '@components/Search/types';
+import type {BaseTextInputRef} from '@components/TextInput/BaseTextInput/types';
 import type {BrickRoad} from '@libs/WorkspacesSettingsUtils';
 import type UnreportedExpenseListItem from '@pages/UnreportedExpenseListItem';
 import type SpendCategorySelectorListItem from '@pages/workspace/categories/SpendCategorySelectorListItem';
@@ -430,6 +433,11 @@ type SplitListItemType = ListItem &
 
         /** Function for updating amount */
         onSplitExpenseAmountChange: (currentItemTransactionID: string, value: number) => void;
+
+        /**
+         * Callback that is called when the amount text input is blurred
+         */
+        onAmountInputFocus?: ((amountInputRef: RefObject<BaseTextInputRef | null>, splitListItemContainerRef: RefObject<View | null>) => void) | undefined;
     };
 
 type SplitListItemProps<TItem extends ListItem> = ListItemProps<TItem>;
@@ -838,12 +846,20 @@ type SelectionListProps<TItem extends ListItem> = Partial<ChildrenProps> & {
 
     /** Whether product training tooltips can be displayed */
     canShowProductTrainingTooltip?: boolean;
+
+    /** Allows to wrap the `SectionList` with a `View` and expose that View's `measureInWindow` function to calculate the size of the `SectionList` */
+    allowMeasurement?: boolean;
 } & TRightHandSideComponent<TItem>;
 
 type SelectionListHandle = {
     scrollAndHighlightItem?: (items: string[]) => void;
     clearInputAfterSelect?: () => void;
     scrollToIndex: (index: number, animated?: boolean) => void;
+    /**
+     * Scroll to item has index and will display at the end of the list
+     */
+    scrollToIndexAtBottom: (index: number, animated?: boolean) => void;
+    measureInWindow: (callback: MeasureInWindowOnSuccessCallback) => void;
     updateAndScrollToFocusedIndex: (newFocusedIndex: number) => void;
     updateExternalTextInputFocus: (isTextInputFocused: boolean) => void;
     getFocusedOption: () => ListItem | undefined;

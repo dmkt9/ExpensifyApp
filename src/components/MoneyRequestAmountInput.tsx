@@ -96,7 +96,7 @@ type MoneyRequestAmountInputProps = {
 
     /** The testID of the input. Used to locate this view in end-to-end tests. */
     testID?: string;
-} & Pick<TextInputWithCurrencySymbolProps, 'autoGrowExtraSpace' | 'submitBehavior'>;
+} & Pick<TextInputWithCurrencySymbolProps, 'autoGrowExtraSpace' | 'submitBehavior' | 'onFocus'>;
 
 type Selection = {
     start: number;
@@ -136,6 +136,7 @@ function MoneyRequestAmountInput(
         testID,
         submitBehavior,
         shouldApplyPaddingToContainer = false,
+        onFocus,
         ...props
     }: MoneyRequestAmountInputProps,
     forwardedRef: ForwardedRef<BaseTextInputRef>,
@@ -306,7 +307,7 @@ function MoneyRequestAmountInput(
             ref={(ref) => {
                 if (typeof forwardedRef === 'function') {
                     forwardedRef(ref);
-                } else if (forwardedRef?.current) {
+                } else if (forwardedRef && 'current' in forwardedRef) {
                     // eslint-disable-next-line no-param-reassign
                     forwardedRef.current = ref;
                 }
@@ -348,6 +349,7 @@ function MoneyRequestAmountInput(
             testID={testID}
             submitBehavior={submitBehavior}
             shouldApplyPaddingToContainer={shouldApplyPaddingToContainer}
+            onFocus={onFocus}
         />
     );
 }
