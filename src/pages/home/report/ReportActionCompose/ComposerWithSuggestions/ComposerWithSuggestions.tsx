@@ -15,11 +15,12 @@ import type {
 import {DeviceEventEmitter, findNodeHandle, InteractionManager, NativeModules, StyleSheet, View} from 'react-native';
 import {useFocusedInputHandler} from 'react-native-keyboard-controller';
 import type {OnyxEntry} from 'react-native-onyx';
-import {useAnimatedRef, useSharedValue} from 'react-native-reanimated';
+import {runOnUI, useAnimatedRef, useSharedValue} from 'react-native-reanimated';
 import type {Emoji} from '@assets/emojis/types';
 import type {MeasureParentContainerAndCursorCallback} from '@components/AutoCompleteSuggestions/types';
 import Composer from '@components/Composer';
 import type {CustomSelectionChangeEvent, TextSelection} from '@components/Composer/types';
+import useKeyboardShortcut from '@hooks/useKeyboardShortcut';
 import useKeyboardState from '@hooks/useKeyboardState';
 import useLocalize from '@hooks/useLocalize';
 import useOnyx from '@hooks/useOnyx';
@@ -500,6 +501,18 @@ function ComposerWithSuggestions(
             }
         },
         [shouldUseNarrowLayout, isKeyboardShown, suggestionsRef, selection.start, includeChronos, handleSendMessage, lastReportAction, reportID, updateComment, selection.end],
+    );
+
+    const isAndroidNative = getPlatform() === CONST.PLATFORM.ANDROID;
+    useKeyboardShortcut(
+        CONST.KEYBOARD_SHORTCUTS.ENTER,
+        useCallback(() => {
+            if (!textInputRef.current?.isFocused()) {
+                return;
+            }
+            runOnUI(handleSendMessage)();
+        }, [handleSendMessage]),
+        {isActive: isIOSNative || isAndroidNative},
     );
 
     const onChangeText = useCallback(
