@@ -248,7 +248,7 @@ function getPolicyBrickRoadIndicatorStatus(policy: OnyxEntry<Policy>, isConnecti
 }
 
 function getPolicyRole(policy: OnyxInputOrEntry<Policy> | SearchPolicy, currentUserLogin: string | undefined) {
-    if (policy?.role) {
+    if (policy?.role && (!currentUserLogin || currentUserLogin === getCurrentUserEmail())) {
         return policy.role;
     }
 
