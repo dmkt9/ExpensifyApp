@@ -56,7 +56,7 @@ function ShareDetailsPage({
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
     const [validFilesToUpload, setValidFilesToUpload] = useState<FileObject[]>([]);
-    const {validateFiles} = useFilesValidation(setValidFilesToUpload);
+    const {validateFiles} = useFilesValidation(setValidFilesToUpload, false);
 
     const report: OnyxEntry<ReportType> = getReportOrDraftReport(reportOrAccountID);
     const displayReport = useMemo(() => getReportDisplayOption(report, unknownUserDetails, reportAttributesDerived), [report, unknownUserDetails, reportAttributesDerived]);
