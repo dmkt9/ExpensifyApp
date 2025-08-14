@@ -1130,7 +1130,7 @@ function IOURequestStepConfirmation({
                         reportID={reportID}
                         shouldDisplayReceipt={!isMovingTransactionFromTrackExpense && !isDistanceRequest && !isPerDiemRequest}
                         isPolicyExpenseChat={isPolicyExpenseChat}
-                        policyID={getIOURequestPolicyID(transaction, report)}
+                        policyID={isPolicyExpenseChat ? getIOURequestPolicyID(transaction, report) : undefined}
                         iouMerchant={transaction?.merchant}
                         iouCreated={transaction?.created}
                         isDistanceRequest={isDistanceRequest}
