@@ -4,7 +4,7 @@ import RNFetchBlob from 'react-native-blob-util';
 import RNFS from 'react-native-fs';
 import Share from 'react-native-share';
 import CONST from '@src/CONST';
-import {appendTimeToFileName, getFileName, getFileType, showGeneralErrorAlert, showPermissionErrorAlert, showSuccessAlert} from './FileUtils';
+import {appendTimeToFileName, encodeLocalFileURI, getFileName, getFileType, showGeneralErrorAlert, showPermissionErrorAlert, showSuccessAlert} from './FileUtils';
 import type {FileDownload} from './types';
 
 /**
@@ -34,7 +34,7 @@ const postDownloadFile = (url: string, fileName?: string, formData?: FormData, o
         body: formData,
     };
 
-    return fetch(url, fetchOptions)
+    return fetch(encodeLocalFileURI(url), fetchOptions)
         .then((response) => {
             if (!response.ok) {
                 throw new Error('Failed to download file');

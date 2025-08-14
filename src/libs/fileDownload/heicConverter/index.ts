@@ -1,4 +1,5 @@
 import {heicTo, isHeic} from 'heic-to';
+import {encodeLocalFileURI} from '../FileUtils';
 import type {HeicConverterFunction} from './types';
 
 /**
@@ -23,7 +24,7 @@ const convertHeicImage: HeicConverterFunction = (file, {onSuccess = () => {}, on
         return;
     }
 
-    fetch(file.uri)
+    fetch(encodeLocalFileURI(file.uri))
         .then((response) => response.blob())
         .then((blob) => {
             const fileFromBlob = new File([blob], file.name ?? 'temp-file', {

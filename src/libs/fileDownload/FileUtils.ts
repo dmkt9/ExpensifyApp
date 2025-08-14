@@ -90,6 +90,18 @@ function showCameraPermissionsAlert() {
     );
 }
 
+function encodeLocalFileURI(uri: string) {
+    if (!uri.startsWith('file://')) {
+        return uri;
+    }
+    const uriArray = uri.split('/');
+    const fileName = uriArray.pop();
+    if (fileName) {
+        uriArray.push(encodeURIComponent(fileName));
+    }
+    return uriArray.join('/');
+}
+
 /**
  * Extracts a filename from a given URL and sanitizes it for file system usage.
  *
@@ -100,7 +112,7 @@ function showCameraPermissionsAlert() {
  *    with underscores.
  */
 function getFileName(url: string): string {
-    const fileName = url.split('/').pop()?.split('?')[0].split('#')[0] ?? '';
+    const fileName = encodeLocalFileURI(url).split('/').pop() ?? '';
 
     if (!fileName) {
         Log.warn('[FileUtils] Could not get attachment name', {url});
@@ -180,7 +192,8 @@ const readFileAsync: ReadFileAsync = (path, fileName, onSuccess, onFailure = () 
             onFailure('[FileUtils] Path not specified');
             return;
         }
-        fetch(path)
+        const uri = encodeLocalFileURI(path);
+        fetch(uri)
             .then((res) => {
                 // For some reason, fetch is "Unable to read uploaded file"
                 // on Android even though the blob is returned, so we'll ignore
@@ -193,10 +206,10 @@ const readFileAsync: ReadFileAsync = (path, fileName, onSuccess, onFailure = () 
                         // On Android devices, fetching blob for a file with name containing spaces fails to retrieve the type of file.
                         // In this case, let us fallback on fileType provided by the caller of this function.
                         const file = new File([blob], cleanFileName(fileName), {type: blob.type || fileType});
-                        file.source = path;
+                        file.source = uri;
                         // For some reason, the File object on iOS does not have a uri property
                         // so images aren't uploaded correctly to the backend
-                        file.uri = path;
+                        file.uri = uri;
                         onSuccess(file);
                         resolve(file);
                     })
@@ -272,7 +285,7 @@ function validateImageForCorruption(file: FileObject): Promise<{width: number; h
 
 /** Verify file format based on the magic bytes of the file - some formats might be identified by multiple signatures */
 function verifyFileFormat({fileUri, formatSignatures}: {fileUri: string; formatSignatures: readonly string[]}) {
-    return fetch(fileUri)
+    return fetch(encodeLocalFileURI(fileUri))
         .then((file) => file.arrayBuffer())
         .then((arrayBuffer) => {
             const uintArray = new Uint8Array(arrayBuffer, 4, 12);
@@ -417,7 +430,7 @@ const normalizeFileObject = (file: FileObject): Promise<FileObject> => {
         return Promise.resolve(file);
     }
 
-    return fetch(file.uri)
+    return fetch(encodeLocalFileURI(file.uri))
         .then((response) => response.blob())
         .then((blob) => {
             const name = file.name ?? 'unknown';
@@ -565,4 +578,5 @@ export {
     getFileValidationErrorText,
     isHeicOrHeifImage,
     getConfirmModalPrompt,
+    encodeLocalFileURI,
 };
