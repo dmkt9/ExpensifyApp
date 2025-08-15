@@ -366,12 +366,12 @@ function categorizeReportsForLHN(
 
         if (isPinned || (reportID && reportAttributes?.[reportID]?.requiresAttention)) {
             pinnedAndGBRReports.push(miniReport);
+        } else if (isArchivedNonExpenseReport(report, !!rNVPs?.private_isArchived)) {
+            archivedReports.push(miniReport);
         } else if (hasErrors) {
             errorReports.push(miniReport);
         } else if (hasDraft) {
             draftReports.push(miniReport);
-        } else if (isArchivedNonExpenseReport(report, !!rNVPs?.private_isArchived)) {
-            archivedReports.push(miniReport);
         } else {
             nonArchivedReports.push(miniReport);
         }
