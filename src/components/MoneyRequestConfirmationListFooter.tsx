@@ -198,6 +198,9 @@ type MoneyRequestConfirmationListFooterProps = {
 
     /** The PDF password callback */
     onPDFPassword?: () => void;
+
+    /** IOU amount */
+    iouAmount?: number;
 };
 
 function MoneyRequestConfirmationListFooter({
@@ -248,6 +251,7 @@ function MoneyRequestConfirmationListFooter({
     onPDFLoadError,
     onPDFPassword,
     isReceiptEditable = false,
+    iouAmount,
 }: MoneyRequestConfirmationListFooterProps) {
     const styles = useThemeStyles();
     const {translate, toLocaleDigit, localeCompare} = useLocalize();
@@ -295,7 +299,7 @@ function MoneyRequestConfirmationListFooter({
     }
 
     if (!reportName) {
-        const optimisticReport = buildOptimisticExpenseReport(reportID, policy?.id, policy?.ownerAccountID ?? CONST.DEFAULT_NUMBER_ID, Number(formattedAmount), currency);
+        const optimisticReport = buildOptimisticExpenseReport(reportID, policy?.id, policy?.ownerAccountID ?? CONST.DEFAULT_NUMBER_ID, iouAmount ?? transaction?.amount ?? 0, currency);
         reportName = populateOptimisticReportFormula(policy?.fieldList?.text_title?.defaultValue ?? '', optimisticReport, policy);
     }
 
