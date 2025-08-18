@@ -60,7 +60,7 @@ function goBackFromSearchMoneyRequest() {
         return;
     }
 
-    if (rootState.routes.length > 1) {
+    if (rootState.routes.length > 1 || (lastRoute?.state?.routes.length ?? 0) > 1) {
         Navigation.goBack();
         return;
     }
