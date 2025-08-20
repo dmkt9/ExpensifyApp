@@ -1370,13 +1370,13 @@ function getReportSections(
                 isAmountColumnWide: shouldShowAmountInWideColumn,
                 isTaxAmountColumnWide: shouldShowTaxAmountInWideColumn,
             };
-            if (reportIDToTransactions[reportKey]?.transactions) {
-                reportIDToTransactions[reportKey].transactions.push(transaction);
-                reportIDToTransactions[reportKey].from = data.personalDetailsList[data?.[reportKey as ReportKey]?.accountID ?? CONST.DEFAULT_NUMBER_ID];
-            } else if (reportIDToTransactions[reportKey]) {
-                reportIDToTransactions[reportKey].transactions = [transaction];
-                reportIDToTransactions[reportKey].from = data.personalDetailsList[data?.[reportKey as ReportKey]?.accountID ?? CONST.DEFAULT_NUMBER_ID];
-            }
+            const transactions = reportIDToTransactions[reportKey]?.transactions ?? [];
+            transactions.push(transaction);
+            reportIDToTransactions[reportKey] = {
+                ...reportIDToTransactions[reportKey],
+                transactions,
+                from: data.personalDetailsList[data?.[reportKey as ReportKey]?.accountID ?? CONST.DEFAULT_NUMBER_ID],
+            };
         }
     }
 
