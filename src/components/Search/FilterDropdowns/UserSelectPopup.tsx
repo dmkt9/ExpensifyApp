@@ -14,11 +14,12 @@ import useThemeStyles from '@hooks/useThemeStyles';
 import useWindowDimensions from '@hooks/useWindowDimensions';
 import canFocusInputOnScreenFocus from '@libs/canFocusInputOnScreenFocus';
 import memoize from '@libs/memoize';
-import type {Option, Section} from '@libs/OptionsListUtils';
+import type {Option, SearchOption, Section} from '@libs/OptionsListUtils';
 import {filterAndOrderOptions, getValidOptions} from '@libs/OptionsListUtils';
 import type {OptionData} from '@libs/ReportUtils';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
+import type {PersonalDetails} from '@src/types/onyx';
 
 function getSelectedOptionData(option: Option) {
     return {...option, reportID: `${option.reportID}`, selected: true};
@@ -57,20 +58,22 @@ function UserSelectPopup({value, closeOverlay, onChange}: UserSelectPopupProps) 
     const [searchTerm, setSearchTerm] = useState('');
     const [isSearchingForReports] = useOnyx(ONYXKEYS.IS_SEARCHING_FOR_REPORTS, {initWithStoredValues: false, canBeMissing: true});
     const initialSelectedOptions = useMemo(() => {
+        const personalDetailsOptions = Object.fromEntries(options.personalDetails.map((detail) => [detail.accountID, detail])) as Record<string, SearchOption<PersonalDetails>>;
         return value.reduce<OptionData[]>((acc, id) => {
             const participant = personalDetails?.[id];
             if (!participant) {
                 return acc;
             }
 
-            const optionData = getSelectedOptionData(participant);
+            const participantFromOptions = personalDetailsOptions[id];
+            const optionData = getSelectedOptionData({...participantFromOptions, ...participant});
             if (optionData) {
                 acc.push(optionData);
             }
 
             return acc;
         }, []);
-    }, [value, personalDetails]);
+    }, [value, personalDetails, options]);
 
     const [selectedOptions, setSelectedOptions] = useState<Option[]>(initialSelectedOptions);
 
