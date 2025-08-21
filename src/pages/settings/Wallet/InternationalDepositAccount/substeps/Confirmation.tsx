@@ -15,7 +15,7 @@ import useThemeStyles from '@hooks/useThemeStyles';
 import {getCurrencySymbol} from '@libs/CurrencyUtils';
 import {getLatestErrorMessage} from '@libs/ErrorUtils';
 import type CustomSubStepProps from '@pages/settings/Wallet/InternationalDepositAccount/types';
-import {clearReimbursementAccountBankCreation, createCorpayBankAccountForWalletFlow} from '@userActions/BankAccounts';
+import {clearReimbursementAccountBankCreation, createCorpayBankAccountForWalletFlow, hideBankAccountErrors} from '@userActions/BankAccounts';
 import CONST from '@src/CONST';
 import type {TranslationPaths} from '@src/languages/types';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -158,6 +158,13 @@ function Confirmation({onNext, onMove, formValues, fieldsMap}: CustomSubStepProp
     );
 
     const errorMessage = getLatestErrorMessage(reimbursementAccount);
+
+    useEffect(
+        () => () => {
+            hideBankAccountErrors();
+        },
+        [],
+    );
 
     return (
         <ScrollView contentContainerStyle={styles.flexGrow1}>
