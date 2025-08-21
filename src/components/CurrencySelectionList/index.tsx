@@ -77,13 +77,16 @@ function CurrencySelectionList({
 
         if (shouldDisplayRecentlyOptions) {
             if (!isEmpty) {
+                const recentsSectionData = shouldDisplaySelectedOptionOnTop ? getUnselectedOptions(recentlyUsedCurrencyOptions) : recentlyUsedCurrencyOptions;
+                const recentsSectionDataKeySet = new Set(recentsSectionData.map((item) => item.keyForList));
+                const allSectionData = (shouldDisplayRecentlyOptions ? unselectedOptions : filteredCurrencies).filter((item) => !recentsSectionDataKeySet.has(item.keyForList));
                 result.push(
                     {
                         title: translate('common.recents'),
-                        data: shouldDisplaySelectedOptionOnTop ? getUnselectedOptions(recentlyUsedCurrencyOptions) : recentlyUsedCurrencyOptions,
+                        data: recentsSectionData,
                         shouldShow: shouldDisplayRecentlyOptions,
                     },
-                    {title: translate('common.all'), data: shouldDisplayRecentlyOptions ? unselectedOptions : filteredCurrencies},
+                    {title: translate('common.all'), data: allSectionData},
                 );
             }
         } else if (!isEmpty) {
