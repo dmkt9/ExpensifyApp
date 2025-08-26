@@ -998,7 +998,7 @@ function getTransactionsForReport(data: OnyxTypes.SearchResults['data'], reportI
 function getReportFromKey(data: OnyxTypes.SearchResults['data'], key: string): OnyxTypes.Report | undefined {
     if (isTransactionEntry(key)) {
         const transaction = data[key];
-        return data[`${ONYXKEYS.COLLECTION.REPORT}${transaction?.reportID}`] as OnyxTypes.Report;
+        return (data[`${ONYXKEYS.COLLECTION.REPORT}${transaction?.reportID}`] as OnyxTypes.Report) ?? getReportOrDraftReport(transaction?.reportID);
     }
     if (isReportEntry(key)) {
         return data[key] as OnyxTypes.Report;
@@ -1019,7 +1019,9 @@ function getChatReport(data: OnyxTypes.SearchResults['data'], report: OnyxTypes.
  * Retrieves the policy associated with a given report.
  */
 function getPolicyFromKey(data: OnyxTypes.SearchResults['data'], report: OnyxTypes.Report) {
-    return data[`${ONYXKEYS.COLLECTION.POLICY}${report?.policyID}`] ?? {};
+    // This will be fixed as part of https://github.com/Expensify/Expensify/issues/507850
+    // eslint-disable-next-line deprecation/deprecation
+    return data[`${ONYXKEYS.COLLECTION.POLICY}${report?.policyID}`] ?? getPolicy(report?.policyID) ?? {};
 }
 
 /**
