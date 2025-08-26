@@ -1,4 +1,5 @@
 import type {OnyxEntry} from 'react-native-onyx';
+import Onyx from 'react-native-onyx';
 import type {ValueOf} from 'type-fest';
 import {FallbackAvatar} from '@components/Icon/Expensicons';
 import useOnyx from '@hooks/useOnyx';
@@ -19,9 +20,17 @@ import {
 } from '@libs/ReportUtils';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
-import type {OnyxInputOrEntry, Report, ReportAction} from '@src/types/onyx';
+import type {OnyxInputOrEntry, PersonalDetailsList, Report, ReportAction} from '@src/types/onyx';
 import type {Icon as IconType} from '@src/types/onyx/OnyxCommon';
 import useReportPreviewSenderID from './useReportPreviewSenderID';
+
+let allPersonalDetails: OnyxEntry<PersonalDetailsList> = {};
+Onyx.connectWithoutView({
+    key: ONYXKEYS.PERSONAL_DETAILS_LIST,
+    callback: (val) => {
+        allPersonalDetails = val;
+    },
+});
 
 function useReportActionAvatars({
     report,
@@ -41,7 +50,8 @@ function useReportActionAvatars({
     fallbackDisplayName?: string;
 }) {
     /* Get avatar type */
-    const [personalDetails] = useOnyx(ONYXKEYS.PERSONAL_DETAILS_LIST, {
+    // eslint-disable-next-line rulesdir/no-unstable-hook-defaults
+    const [personalDetails = allPersonalDetails] = useOnyx(ONYXKEYS.PERSONAL_DETAILS_LIST, {
         canBeMissing: true,
     });
 

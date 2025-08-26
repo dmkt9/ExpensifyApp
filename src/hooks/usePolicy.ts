@@ -1,3 +1,4 @@
+import {getPolicy} from '@libs/PolicyUtils';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import useOnyx from './useOnyx';
@@ -10,7 +11,7 @@ function getPolicyIDOrDefault(policyID?: string) {
 }
 
 function usePolicy(policyID?: string) {
-    const [policy] = useOnyx(`${ONYXKEYS.COLLECTION.POLICY}${getPolicyIDOrDefault(policyID)}`);
+    const [policy = getPolicy(getPolicyIDOrDefault(policyID))] = useOnyx(`${ONYXKEYS.COLLECTION.POLICY}${getPolicyIDOrDefault(policyID)}`);
     return policy;
 }
 

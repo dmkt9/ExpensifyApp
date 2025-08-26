@@ -316,8 +316,9 @@ function Search({queryJSON, searchResults, onSearchListScroll, contentContainerS
     useEffect(() => {
         const focusedRoute = findFocusedRoute(navigationRef.getRootState());
         const isMigratedModalDisplayed = focusedRoute?.name === NAVIGATORS.MIGRATED_USER_MODAL_NAVIGATOR || focusedRoute?.name === SCREENS.MIGRATED_USER_WELCOME_MODAL.ROOT;
+        const isTestToolModalOpened = focusedRoute?.name === SCREENS.TEST_TOOLS_MODAL.ROOT;
 
-        if ((!isFocused && !isMigratedModalDisplayed) || isOffline) {
+        if ((!isFocused && !isMigratedModalDisplayed && !isTestToolModalOpened) || isOffline) {
             return;
         }
 

@@ -3,6 +3,7 @@ import type {ColorValue, StyleProp, ViewStyle} from 'react-native';
 import type {OnyxEntry} from 'react-native-onyx';
 import type {ValueOf} from 'type-fest';
 import useOnyx from '@hooks/useOnyx';
+import {getReportOrDraftReport} from '@libs/ReportUtils';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import type {CompanyCardFeed, ReportAction} from '@src/types/onyx';
@@ -94,7 +95,7 @@ function ReportActionAvatars({
 
     // reportID can be an empty string causing Onyx to fetch the whole collection
     // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-    const [report] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT}${reportID || undefined}`, {canBeMissing: true});
+    const [report = getReportOrDraftReport(reportID)] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT}${reportID || undefined}`, {canBeMissing: true});
 
     const shouldStackHorizontally = !!horizontalStacking;
     const isHorizontalStackingAnObject = shouldStackHorizontally && typeof horizontalStacking !== 'boolean';
