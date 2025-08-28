@@ -182,16 +182,18 @@ function ReportScreen({route, navigation}: ReportScreenProps) {
             return;
         }
 
-        const lastAccessedReportID = findLastAccessedReport(!isBetaEnabled(CONST.BETAS.DEFAULT_ROOMS), !!route.params.openOnAdminRoom)?.reportID;
+        InteractionManager.runAfterInteractions(() => {
+            const lastAccessedReportID = findLastAccessedReport(!isBetaEnabled(CONST.BETAS.DEFAULT_ROOMS), !!route.params.openOnAdminRoom)?.reportID;
 
-        // It's possible that reports aren't fully loaded yet
-        // in that case the reportID is undefined
-        if (!lastAccessedReportID) {
-            return;
-        }
+            // It's possible that reports aren't fully loaded yet
+            // in that case the reportID is undefined
+            if (!lastAccessedReportID) {
+                return;
+            }
 
-        Log.info(`[ReportScreen] no reportID found in params, setting it to lastAccessedReportID: ${lastAccessedReportID}`);
-        navigation.setParams({reportID: lastAccessedReportID});
+            Log.info(`[ReportScreen] no reportID found in params, setting it to lastAccessedReportID: ${lastAccessedReportID}`);
+            navigation.setParams({reportID: lastAccessedReportID});
+        });
     }, [isBetaEnabled, navigation, route]);
 
     const [personalDetails] = useOnyx(ONYXKEYS.PERSONAL_DETAILS_LIST, {canBeMissing: true});
