@@ -3925,10 +3925,12 @@ function getMoneyRequestReportName({
     report,
     policy,
     invoiceReceiverPolicy,
+    personalDetails,
 }: {
     report: OnyxEntry<Report>;
     policy?: OnyxEntry<Policy> | SearchPolicy;
     invoiceReceiverPolicy?: OnyxEntry<Policy> | SearchPolicy;
+    personalDetails?: Partial<PersonalDetailsList>;
 }): string {
     if (report?.reportName && isExpenseReport(report)) {
         return report.reportName;
@@ -3945,7 +3947,7 @@ function getMoneyRequestReportName({
         const chatReport = getReportOrDraftReport(report?.chatReportID);
         payerOrApproverName = getInvoicePayerName(chatReport, invoiceReceiverPolicy);
     } else {
-        payerOrApproverName = getDisplayNameForParticipant({accountID: report?.managerID}) ?? '';
+        payerOrApproverName = getDisplayNameForParticipant({accountID: report?.managerID, personalDetailsData: personalDetails}) ?? '';
     }
 
     const payerPaidAmountMessage = translateLocal('iou.payerPaidAmount', {
@@ -5378,7 +5380,7 @@ function getReportNameInternal({
     }
 
     if (isMoneyRequestReport(report)) {
-        formattedName = getMoneyRequestReportName({report, policy});
+        formattedName = getMoneyRequestReportName({report, policy, personalDetails});
     }
 
     if (isInvoiceReport(report)) {
@@ -11380,12 +11382,12 @@ function hasReportBeenRetracted(report: OnyxEntry<Report>, reportActions?: OnyxE
     return reportActionList.some((action) => isRetractedAction(action));
 }
 
-function getMoneyReportPreviewName(action: ReportAction, iouReport: OnyxEntry<Report>, isInvoice?: boolean) {
+function getMoneyReportPreviewName(action: ReportAction, iouReport: OnyxEntry<Report>, isInvoice?: boolean, personalDetails?: Partial<PersonalDetailsList>) {
     if (isInvoice && isActionOfType(action, CONST.REPORT.ACTIONS.TYPE.REPORT_PREVIEW)) {
         const originalMessage = getOriginalMessage(action);
         return originalMessage && translateLocal('iou.invoiceReportName', originalMessage);
     }
-    return getReportName(iouReport) || action.childReportName;
+    return getReportName(iouReport, undefined, undefined, personalDetails) || action.childReportName;
 }
 
 /**

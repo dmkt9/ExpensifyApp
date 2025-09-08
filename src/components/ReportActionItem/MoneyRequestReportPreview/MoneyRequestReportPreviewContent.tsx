@@ -187,6 +187,7 @@ function MoneyRequestReportPreviewContent({
 
     const {isDelegateAccessRestricted, showDelegateNoAccessModal} = useContext(DelegateNoAccessContext);
     const [reportActions] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${iouReportID}`, {canBeMissing: true});
+    const [personalDetails] = useOnyx(`${ONYXKEYS.PERSONAL_DETAILS_LIST}`, {canBeMissing: true});
 
     const hasReportBeenRetracted = hasReportBeenReopenedUtils(iouReport, reportActions) || hasReportBeenRetractedUtils(iouReport, reportActions);
 
@@ -652,7 +653,7 @@ function MoneyRequestReportPreviewContent({
                                                             style={[styles.headerText]}
                                                             testID="MoneyRequestReportPreview-reportName"
                                                         >
-                                                            {getMoneyReportPreviewName(action, iouReport, isInvoice)}
+                                                            {getMoneyReportPreviewName(action, iouReport, isInvoice, personalDetails)}
                                                         </Text>
                                                     </Animated.View>
                                                 </View>
