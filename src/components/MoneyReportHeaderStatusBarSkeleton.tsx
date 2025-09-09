@@ -15,6 +15,7 @@ function MoneyReportHeaderStatusBarSkeleton() {
                 height={28}
                 backgroundColor={theme.skeletonLHNIn}
                 foregroundColor={theme.skeletonLHNOut}
+                style={styles.flex1}
             >
                 <Rect
                     x={0}
