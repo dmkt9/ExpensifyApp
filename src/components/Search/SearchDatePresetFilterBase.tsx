@@ -64,28 +64,31 @@ function SearchDatePresetFilterBase({defaultDateValues, selectedDateModifier, on
 
     const shouldShowHorizontalRule = !!presets?.length;
 
-    const [dateValues, setDateValues] = useState<SearchDateValues>(defaultDateValues);
-    const setDateValue = useCallback((dateModifier: SearchDateModifier, value: string | undefined) => {
-        setDateValues((prevDateValues) => {
-            if (dateModifier === CONST.SEARCH.DATE_MODIFIERS.ON && isSearchDatePreset(value)) {
-                return {
-                    [CONST.SEARCH.DATE_MODIFIERS.ON]: value,
-                    [CONST.SEARCH.DATE_MODIFIERS.BEFORE]: undefined,
-                    [CONST.SEARCH.DATE_MODIFIERS.AFTER]: undefined,
-                };
-            }
+    const [dateValues = defaultDateValues, setDateValues] = useState<SearchDateValues>();
+    const setDateValue = useCallback(
+        (dateModifier: SearchDateModifier, value: string | undefined) => {
+            setDateValues((prevDateValues = defaultDateValues) => {
+                if (dateModifier === CONST.SEARCH.DATE_MODIFIERS.ON && isSearchDatePreset(value)) {
+                    return {
+                        [CONST.SEARCH.DATE_MODIFIERS.ON]: value,
+                        [CONST.SEARCH.DATE_MODIFIERS.BEFORE]: undefined,
+                        [CONST.SEARCH.DATE_MODIFIERS.AFTER]: undefined,
+                    };
+                }
 
-            if (dateModifier !== CONST.SEARCH.DATE_MODIFIERS.ON && isSearchDatePreset(prevDateValues[CONST.SEARCH.DATE_MODIFIERS.ON])) {
-                return {
-                    ...prevDateValues,
-                    [dateModifier]: value,
-                    [CONST.SEARCH.DATE_MODIFIERS.ON]: undefined,
-                };
-            }
+                if (dateModifier !== CONST.SEARCH.DATE_MODIFIERS.ON && isSearchDatePreset(prevDateValues[CONST.SEARCH.DATE_MODIFIERS.ON])) {
+                    return {
+                        ...prevDateValues,
+                        [dateModifier]: value,
+                        [CONST.SEARCH.DATE_MODIFIERS.ON]: undefined,
+                    };
+                }
 
-            return {...prevDateValues, [dateModifier]: value};
-        });
-    }, []);
+                return {...prevDateValues, [dateModifier]: value};
+            });
+        },
+        [defaultDateValues],
+    );
 
     const dateDisplayValues = useMemo<SearchDateValues>(() => {
         const dateOn = dateValues[CONST.SEARCH.DATE_MODIFIERS.ON];
