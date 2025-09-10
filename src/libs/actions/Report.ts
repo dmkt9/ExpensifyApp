@@ -1699,12 +1699,16 @@ function markCommentAsUnread(reportID: string | undefined, reportAction: ReportA
     }
 
     const reportActions = allReportActions?.[reportID];
-
+    const report = allReports?.[`${ONYXKEYS.COLLECTION.REPORT}${reportID}`];
+    const chatReport = allReports?.[`${ONYXKEYS.COLLECTION.REPORT}${report?.chatReportID}`];
+    const transactionThreadReportID = ReportActionsUtils.getOneTransactionThreadReportID(report, chatReport, reportActions ?? []);
+    const transactionThreadReportActions = allReportActions?.[transactionThreadReportID ?? ''];
+    const transactionThreadReport = allReports?.[`${ONYXKEYS.COLLECTION.REPORT}${transactionThreadReportID}`];
     // Find the latest report actions from other users
-    const latestReportActionFromOtherUsers = Object.values(reportActions ?? {}).reduce((latest: ReportAction | null, current: ReportAction) => {
+    const latestReportActionFromOtherUsers = Object.values({...transactionThreadReportActions, ...reportActions}).reduce((latest: ReportAction | null, current: ReportAction) => {
         if (
             !ReportActionsUtils.isDeletedAction(current) &&
-            current.actorAccountID !== currentUserAccountID &&
+            (current.actorAccountID !== currentUserAccountID || current.actionName !== CONST.REPORT.ACTIONS.TYPE.ADD_COMMENT) &&
             (!latest || current.created > latest.created) &&
             // Whisper action doesn't affect lastVisibleActionCreated, so skip whisper action except actionable mention whisper
             (!ReportActionsUtils.isWhisperAction(current) || current.actionName === CONST.REPORT.ACTIONS.TYPE.ACTIONABLE_MENTION_WHISPER)
@@ -1713,11 +1717,6 @@ function markCommentAsUnread(reportID: string | undefined, reportAction: ReportA
         }
         return latest;
     }, null);
-
-    const report = allReports?.[`${ONYXKEYS.COLLECTION.REPORT}${reportID}`];
-    const chatReport = allReports?.[`${ONYXKEYS.COLLECTION.REPORT}${report?.chatReportID}`];
-    const transactionThreadReportID = ReportActionsUtils.getOneTransactionThreadReportID(report, chatReport, reportActions ?? []);
-    const transactionThreadReport = allReports?.[`${ONYXKEYS.COLLECTION.REPORT}${transactionThreadReportID}`];
 
     // If no action created date is provided, use the last action's from other user
     const actionCreationTime =
