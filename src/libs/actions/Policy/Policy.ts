@@ -4836,11 +4836,9 @@ function setPolicyProhibitedExpense(policyID: string, prohibitedExpense: keyof P
         ],
     };
 
-    // Remove pendingFields before sending to the API
-    const {pendingFields, ...prohibitedExpensesWithoutPendingFields} = prohibitedExpenses;
     const parameters: SetPolicyProhibitedExpensesParams = {
         policyID,
-        prohibitedExpenses: JSON.stringify(prohibitedExpensesWithoutPendingFields),
+        prohibitedExpenses: JSON.stringify({[prohibitedExpense]: prohibitedExpenses[prohibitedExpense]}),
     };
 
     API.write(WRITE_COMMANDS.SET_POLICY_PROHIBITED_EXPENSES, parameters, onyxData);
