@@ -5,7 +5,7 @@ import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import type {Report} from '@src/types/onyx';
 import {isEmptyObject} from '@src/types/utils/EmptyObject';
-import {isChatRoom} from './ReportUtils';
+import {getReportOrDraftReport, isChatRoom} from './ReportUtils';
 
 const removeLeadingLTRAndHash = (value: string) => value.replace(CONST.UNICODE.LTR, '').replace('#', '');
 
@@ -15,7 +15,7 @@ const getReportMentionDetails = (htmlAttributeReportID: string, currentReport: O
 
     // Get mention details based on reportID from tag attribute
     if (!isEmpty(htmlAttributeReportID)) {
-        const report = reports?.[`${ONYXKEYS.COLLECTION.REPORT}${htmlAttributeReportID}`];
+        const report = reports?.[`${ONYXKEYS.COLLECTION.REPORT}${htmlAttributeReportID}`] ?? getReportOrDraftReport(htmlAttributeReportID);
         reportID = report?.reportID ?? htmlAttributeReportID;
         mentionDisplayText = removeLeadingLTRAndHash(report?.reportName ?? htmlAttributeReportID);
         // Get mention details from name inside tnode
