@@ -21,6 +21,8 @@ import type {Transaction} from '@src/types/onyx';
 import MoneyRequestReportPreviewContent from './MoneyRequestReportPreviewContent';
 import type {MoneyRequestReportPreviewProps} from './types';
 
+let lastCurrentWidth = 0;
+
 function MoneyRequestReportPreview({
     allReports,
     policies,
@@ -54,7 +56,7 @@ function MoneyRequestReportPreview({
     const isSplitBillAction = isSplitBillActionReportActionsUtils(action);
 
     const widthsRef = useRef<{currentWidth: number | null; currentWrapperWidth: number | null}>({currentWidth: null, currentWrapperWidth: null});
-    const [widths, setWidths] = useState({currentWidth: 0, currentWrapperWidth: 0});
+    const [widths, setWidths] = useState({currentWidth: lastCurrentWidth, currentWrapperWidth: 0});
 
     const updateWidths = useCallback(() => {
         const {currentWidth, currentWrapperWidth} = widthsRef.current;
@@ -69,6 +71,7 @@ function MoneyRequestReportPreview({
             const newWidth = e.nativeEvent.layout.width;
             if (widthsRef.current.currentWidth !== newWidth) {
                 widthsRef.current.currentWidth = newWidth;
+                lastCurrentWidth = newWidth === 0 ? lastCurrentWidth : newWidth;
                 updateWidths();
             }
         },
