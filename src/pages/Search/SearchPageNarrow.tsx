@@ -27,6 +27,7 @@ import useStyleUtils from '@hooks/useStyleUtils';
 import useThemeStyles from '@hooks/useThemeStyles';
 import useWindowDimensions from '@hooks/useWindowDimensions';
 import {turnOffMobileSelectionMode} from '@libs/actions/MobileSelectionMode';
+import getPlatform from '@libs/getPlatform';
 import Navigation from '@libs/Navigation/Navigation';
 import {buildCannedSearchQuery} from '@libs/SearchQueryUtils';
 import {isSearchDataLoaded} from '@libs/SearchUIUtils';
@@ -153,6 +154,7 @@ function SearchPageNarrow({queryJSON, headerButtonsOptions, searchResults, isMob
     const shouldShowFooter = !!metadata?.count;
     const isDataLoaded = isSearchDataLoaded(searchResults, queryJSON);
     const shouldShowLoadingState = !isOffline && (!isDataLoaded || !!currentSearchResults?.search?.isLoading);
+    const isAndroidNative = getPlatform() === CONST.PLATFORM.ANDROID;
 
     return (
         <ScreenWrapper
@@ -175,7 +177,9 @@ function SearchPageNarrow({queryJSON, headerButtonsOptions, searchResults, isMob
                             />
                         </View>
                         <View style={[styles.flex1]}>
-                            <Animated.View style={[topBarAnimatedStyle, !searchRouterListVisible && styles.narrowSearchRouterInactiveStyle, styles.flex1, styles.bgTransparent]}>
+                            <Animated.View
+                                style={[topBarAnimatedStyle, (!searchRouterListVisible || isAndroidNative) && styles.narrowSearchRouterInactiveStyle, styles.flex1, styles.bgTransparent]}
+                            >
                                 <View style={[styles.flex1, styles.pt2, styles.appBG]}>
                                     <SearchPageHeader
                                         queryJSON={queryJSON}
