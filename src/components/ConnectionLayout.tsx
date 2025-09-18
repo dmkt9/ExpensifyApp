@@ -2,6 +2,7 @@ import isEmpty from 'lodash/isEmpty';
 import React, {useMemo} from 'react';
 import type {StyleProp, TextStyle, ViewStyle} from 'react-native';
 import {View} from 'react-native';
+import useBottomSafeSafeAreaPaddingStyle from '@hooks/useBottomSafeSafeAreaPaddingStyle';
 import useLocalize from '@hooks/useLocalize';
 import useOnyx from '@hooks/useOnyx';
 import useThemeStyles from '@hooks/useThemeStyles';
@@ -85,6 +86,14 @@ function ConnectionLayoutContent({title, titleStyle, children, titleAlreadyTrans
     );
 }
 
+function Container({contentContainerStyle, children}: {contentContainerStyle?: StyleProp<ViewStyle> | undefined; children: React.ReactNode}) {
+    const bottomSafeAreaPaddingStyle = useBottomSafeSafeAreaPaddingStyle({
+        addBottomSafeAreaPadding: true,
+        style: contentContainerStyle,
+    });
+    return <View style={bottomSafeAreaPaddingStyle}>{children}</View>;
+}
+
 function ConnectionLayout({
     displayName,
     headerTitle,
@@ -98,7 +107,7 @@ function ConnectionLayout({
     titleStyle,
     shouldIncludeSafeAreaPaddingBottom,
     connectionName,
-    shouldUseScrollView = true,
+    shouldUseScrollView = false,
     headerTitleAlreadyTranslated,
     titleAlreadyTranslated,
     shouldLoadForEmptyConnection = false,
@@ -151,7 +160,7 @@ function ConnectionLayout({
                         {renderSelectionContent}
                     </ScrollView>
                 ) : (
-                    <View style={contentContainerStyle}>{renderSelectionContent}</View>
+                    <Container contentContainerStyle={contentContainerStyle}>{renderSelectionContent}</Container>
                 )}
             </ScreenWrapper>
         </AccessOrNotFoundWrapper>
