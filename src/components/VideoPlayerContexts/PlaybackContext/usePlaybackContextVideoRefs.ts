@@ -10,11 +10,11 @@ function usePlaybackContextVideoRefs(resetCallback: () => void) {
     const isPlayPendingRef = useRef(false);
 
     const pauseVideo: PlaybackContextVideoRefs['pause'] = useCallback(() => {
-        currentVideoPlayerRef.current?.setStatusAsync?.({shouldPlay: false});
+        currentVideoPlayerRef.current?.setStatusAsync?.({shouldPlay: false}).catch(() => {});
     }, [currentVideoPlayerRef]);
 
     const stopVideo: StopVideo = useCallback(() => {
-        currentVideoPlayerRef.current?.setStatusAsync?.({shouldPlay: false, positionMillis: 0});
+        currentVideoPlayerRef.current?.setStatusAsync?.({shouldPlay: false, positionMillis: 0}).catch(() => {});
     }, [currentVideoPlayerRef]);
 
     const playVideo: PlaybackContextVideoRefs['play'] = useCallback(() => {
@@ -34,7 +34,7 @@ function usePlaybackContextVideoRefs(resetCallback: () => void) {
     }, [currentVideoPlayerRef]);
 
     const unloadVideo: UnloadVideo = useCallback(() => {
-        currentVideoPlayerRef.current?.unloadAsync?.();
+        currentVideoPlayerRef.current?.unloadAsync?.().catch(() => {});
     }, [currentVideoPlayerRef]);
 
     const checkIfVideoIsPlaying: PlaybackContextVideoRefs['isPlaying'] = useCallback(

@@ -125,7 +125,7 @@ function AttachmentView({
 }: AttachmentViewProps) {
     const [transaction] = useOnyx(`${ONYXKEYS.COLLECTION.TRANSACTION}${getNonEmptyStringOnyxID(transactionID)}`, {canBeMissing: true});
     const {translate} = useLocalize();
-    const {updateCurrentURLAndReportID} = usePlaybackContext();
+    const {updateCurrentURLAndReportID, pauseVideo, playVideo} = usePlaybackContext();
 
     const attachmentCarouselPagerContext = useContext(AttachmentCarouselPagerContext);
     const {onAttachmentError} = attachmentCarouselPagerContext ?? {};
@@ -162,6 +162,17 @@ function AttachmentView({
         const isErrorInImage = imageError && (typeof fallbackSource === 'number' || typeof fallbackSource === 'function');
         onAttachmentError?.(source, isErrorInImage && isImageSource);
     }, [fallbackSource, file?.name, imageError, onAttachmentError, source]);
+
+    useEffect(() => {
+        if (!isVideo) {
+            return;
+        }
+        if (isFocused) {
+            playVideo();
+        } else {
+            pauseVideo();
+        }
+    }, [isFocused, isVideo, pauseVideo, playVideo]);
 
     // Handles case where source is a component (ex: SVG) or a number
     // Number may represent a SVG or an image
