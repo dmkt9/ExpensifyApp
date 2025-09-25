@@ -37,6 +37,7 @@ import {
     getExportIntegrationLastMessageText,
     getIOUReportIDFromReportActionPreview,
     getJoinRequestMessage,
+    getLastVisibleAction,
     getLastVisibleMessage,
     getLeaveRoomMessage,
     getMentionedAccountIDsFromAction,
@@ -826,7 +827,13 @@ function createOption(
         if (result.private_isArchived) {
             result.lastMessageText = translateLocal('reportArchiveReasons.default');
         } else {
-            result.lastMessageText = report.lastMessageText ?? '';
+            const lastAction = report?.reportID ? getLastVisibleAction(report.reportID, canUserPerformWriteAction(report, false)) : undefined;
+            // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+            const lastActorAccountID = lastAction?.actorAccountID || report?.lastActorAccountID;
+            const lastActorDetails: Partial<PersonalDetails> | null = lastActorAccountID ? (personalDetails?.[lastActorAccountID] ?? null) : null;
+            const lastMessageText = report && lastActorDetails ? getLastMessageTextForReport({report, lastActorDetails}) : '';
+            // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+            result.lastMessageText = report.lastMessageText || lastMessageText;
         }
 
         // Type/category flags already set in initialization above, but update brickRoadIndicator
