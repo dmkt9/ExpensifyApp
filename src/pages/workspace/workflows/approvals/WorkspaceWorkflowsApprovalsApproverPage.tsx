@@ -188,44 +188,49 @@ function WorkspaceWorkflowsApprovalsApproverPage({policy, personalDetails, isLoa
         Navigation.goBack(backTo);
     }, [isInitialCreationFlow, approvalWorkflow?.action, route.params.policyID, rhpRoutes.length, firstApprover]);
 
-    const nextStep = useCallback(() => {
-        if (selectedApproverEmail) {
-            const policyMemberEmailsToAccountIDs = getMemberAccountIDsForWorkspace(employeeList);
-            const accountID = Number(policyMemberEmailsToAccountIDs[selectedApproverEmail] ?? '');
-            const {avatar, displayName = selectedApproverEmail} = personalDetails?.[accountID] ?? {};
-            setApprovalWorkflowApprover({
-                approver: {
-                    email: selectedApproverEmail,
-                    avatar,
-                    displayName,
-                },
-                approverIndex,
-                currentApprovalWorkflow,
-                policyID: route.params.policyID,
-            });
-        } else {
-            clearApprovalWorkflowApprover({approverIndex, currentApprovalWorkflow});
-        }
+    const nextStep = useCallback(
+        (selectedEmail: string | undefined) => {
+            if (selectedEmail) {
+                const policyMemberEmailsToAccountIDs = getMemberAccountIDsForWorkspace(employeeList);
+                const accountID = Number(policyMemberEmailsToAccountIDs[selectedEmail] ?? '');
+                const {avatar, displayName = selectedEmail} = personalDetails?.[accountID] ?? {};
+                setApprovalWorkflowApprover({
+                    approver: {
+                        email: selectedEmail,
+                        avatar,
+                        displayName,
+                    },
+                    approverIndex,
+                    currentApprovalWorkflow,
+                    policyID: route.params.policyID,
+                });
+            } else {
+                clearApprovalWorkflowApprover({approverIndex, currentApprovalWorkflow});
+            }
 
-        if (isInitialCreationFlow) {
-            Navigation.navigate(ROUTES.WORKSPACE_WORKFLOWS_APPROVALS_NEW.getRoute(route.params.policyID));
-        } else {
-            goBack();
-        }
-    }, [selectedApproverEmail, employeeList, personalDetails, approverIndex, route.params.policyID, isInitialCreationFlow, goBack, currentApprovalWorkflow]);
+            if (isInitialCreationFlow) {
+                Navigation.navigate(ROUTES.WORKSPACE_WORKFLOWS_APPROVALS_NEW.getRoute(route.params.policyID));
+            } else {
+                goBack();
+            }
+        },
+        [employeeList, personalDetails, approverIndex, route.params.policyID, isInitialCreationFlow, goBack, currentApprovalWorkflow],
+    );
 
     const button = useMemo(() => {
-        let buttonText = isInitialCreationFlow ? translate('common.next') : translate('common.save');
+        let buttonText = translate('common.next');
 
         if (shouldShowListEmptyContent) {
             buttonText = translate('common.buttonConfirm');
+        } else if (!isInitialCreationFlow) {
+            return null;
         }
 
         return (
             <FormAlertWithSubmitButton
                 isDisabled={!shouldShowListEmptyContent && !selectedApproverEmail && isInitialCreationFlow}
                 buttonText={buttonText}
-                onSubmit={nextStep}
+                onSubmit={() => nextStep(selectedApproverEmail)}
                 containerStyles={[styles.flexReset, styles.flexGrow0, styles.flexShrink0, styles.flexBasisAuto]}
                 enabledWhenOffline
                 shouldBlendOpacity
@@ -236,13 +241,13 @@ function WorkspaceWorkflowsApprovalsApproverPage({policy, personalDetails, isLoa
     const toggleApprover = useCallback(
         (approver: SelectionListApprover) =>
             debounce(() => {
-                if (selectedApproverEmail === approver.login) {
-                    setSelectedApproverEmail(undefined);
-                    return;
+                const approverEmail = selectedApproverEmail === approver.login ? undefined : approver.login;
+                setSelectedApproverEmail(approverEmail);
+                if (!isInitialCreationFlow) {
+                    nextStep(approverEmail);
                 }
-                setSelectedApproverEmail(approver.login);
             }, 200)(),
-        [selectedApproverEmail],
+        [selectedApproverEmail, isInitialCreationFlow, nextStep],
     );
 
     const headerMessage = useMemo(() => (searchTerm && !sections.at(0)?.data?.length ? translate('common.noResultsFound') : ''), [searchTerm, sections, translate]);
