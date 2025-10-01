@@ -636,6 +636,7 @@ function ComposerWithSuggestions({
     const sendMessage = useCallback(() => {
         const shouldWaitForComposerToCollapse = composerHeight > CONST.COMPOSER.FULL_COMPOSER_MIN_HEIGHT / 2;
         if (shouldWaitForComposerToCollapse) {
+            mobileInputScrollPosition.current = 0;
             updateComment('', true);
             sendMessageDataRef.current = {
                 isPending: true,
