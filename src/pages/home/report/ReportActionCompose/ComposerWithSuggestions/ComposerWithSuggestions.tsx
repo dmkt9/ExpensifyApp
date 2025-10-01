@@ -15,7 +15,7 @@ import type {
 import {DeviceEventEmitter, InteractionManager, NativeModules, StyleSheet, View} from 'react-native';
 import {useFocusedInputHandler} from 'react-native-keyboard-controller';
 import type {OnyxEntry} from 'react-native-onyx';
-import {useAnimatedRef, useSharedValue} from 'react-native-reanimated';
+import {runOnJS, runOnUI, useAnimatedRef, useSharedValue} from 'react-native-reanimated';
 import type {Emoji} from '@assets/emojis/types';
 import type {MeasureParentContainerAndCursorCallback} from '@components/AutoCompleteSuggestions/types';
 import Composer from '@components/Composer';
@@ -620,11 +620,37 @@ function ComposerWithSuggestions({
         textInputRef.current.blur();
     }, []);
 
+    const sendMessageDataRef = useRef({isPending: false, text: ''});
+    useEffect(() => {
+        const {text, isPending} = sendMessageDataRef.current;
+        if (!isPending || composerHeight > CONST.COMPOSER.FULL_COMPOSER_MIN_HEIGHT / 2) {
+            return;
+        }
+
+        sendMessageDataRef.current.isPending = false;
+        InteractionManager.runAfterInteractions(() => {
+            onCleared(text);
+        });
+    }, [value, composerHeight, onCleared]);
+
+    const sendMessage = useCallback(() => {
+        const shouldWaitForComposerToCollapse = composerHeight > CONST.COMPOSER.FULL_COMPOSER_MIN_HEIGHT / 2;
+        if (shouldWaitForComposerToCollapse) {
+            updateComment('', true);
+            sendMessageDataRef.current = {
+                isPending: true,
+                text: value,
+            };
+        } else {
+            runOnUI(forceClearInput)(animatedRef);
+        }
+    }, [animatedRef, composerHeight, updateComment, value]);
+
     const clear = useCallback(() => {
         'worklet';
 
-        forceClearInput(animatedRef);
-    }, [animatedRef]);
+        runOnJS(sendMessage)();
+    }, [sendMessage]);
 
     const getCurrentText = useCallback(() => {
         return commentRef.current;
