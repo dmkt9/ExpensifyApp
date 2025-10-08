@@ -555,6 +555,7 @@ function IOURequestStepConfirmation({
                     shouldHandleNavigation: index === transactions.length - 1,
                     shouldGenerateTransactionThreadReport,
                     backToReport,
+                    shouldNotCreateNewMoneyRequestReport: index > 0,
                 });
             });
         },

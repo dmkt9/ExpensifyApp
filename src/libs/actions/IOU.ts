@@ -487,6 +487,7 @@ type RequestMoneyInformation = {
     optimisticIOUReportID?: string;
     optimisticReportPreviewActionID?: string;
     shouldGenerateTransactionThreadReport: boolean;
+    shouldNotCreateNewMoneyRequestReport?: boolean;
 };
 
 type MoneyRequestInformationParams = {
@@ -506,6 +507,7 @@ type MoneyRequestInformationParams = {
     optimisticReportPreviewActionID?: string;
     shouldGenerateTransactionThreadReport?: boolean;
     isSplitExpense?: boolean;
+    shouldNotCreateNewMoneyRequestReport?: boolean;
 };
 
 type MoneyRequestOptimisticParams = {
@@ -3377,6 +3379,7 @@ function getMoneyRequestInformation(moneyRequestInformation: MoneyRequestInforma
         optimisticReportPreviewActionID,
         shouldGenerateTransactionThreadReport = true,
         isSplitExpense,
+        shouldNotCreateNewMoneyRequestReport,
     } = moneyRequestInformation;
     const {payeeAccountID = userAccountID, payeeEmail = currentUserEmail, participant} = participantParams;
     const {policy, policyCategories, policyTagList} = policyParams;
@@ -3439,7 +3442,9 @@ function getMoneyRequestInformation(moneyRequestInformation: MoneyRequestInforma
     }
 
     const isScanRequest = isScanRequestTransactionUtils({amount, receipt});
-    const shouldCreateNewMoneyRequestReport = isSplitExpense ? false : shouldCreateNewMoneyRequestReportReportUtils(iouReport, chatReport, isScanRequest);
+    const shouldCreateNewMoneyRequestReport =
+        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+        isSplitExpense || shouldNotCreateNewMoneyRequestReport ? false : shouldCreateNewMoneyRequestReportReportUtils(iouReport, chatReport, isScanRequest);
 
     if (!iouReport || shouldCreateNewMoneyRequestReport) {
         const nonReimbursableTotal = reimbursable ? 0 : amount;
@@ -5640,6 +5645,7 @@ function requestMoney(requestMoneyInformation: RequestMoneyInformation) {
         optimisticIOUReportID,
         optimisticReportPreviewActionID,
         shouldGenerateTransactionThreadReport,
+        shouldNotCreateNewMoneyRequestReport,
     } = requestMoneyInformation;
     const {payeeAccountID} = participantParams;
     const parsedComment = getParsedComment(transactionParams.comment ?? '');
@@ -5725,6 +5731,7 @@ function requestMoney(requestMoneyInformation: RequestMoneyInformation) {
         optimisticIOUReportID,
         optimisticReportPreviewActionID,
         shouldGenerateTransactionThreadReport,
+        shouldNotCreateNewMoneyRequestReport,
     });
     const activeReportID = isMoneyRequestReport ? report?.reportID : chatReport.reportID;
 
