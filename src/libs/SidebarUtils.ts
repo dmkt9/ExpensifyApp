@@ -711,7 +711,7 @@ function getOptionData({
     // If the last actor's details are not currently saved in Onyx Collection,
     // then try to get that from the last report action if that action is valid
     // to get data from.
-    let lastActorDetails: Partial<PersonalDetails> | null = lastActorAccountID ? (personalDetails?.[lastActorAccountID] ?? null) : null;
+    let lastActorDetails: Partial<PersonalDetails> | null = lastActorAccountID && personalDetails?.[lastActorAccountID] ? {...personalDetails?.[lastActorAccountID]} : null;
     if (!lastActorDetails && lastAction) {
         const lastActorDisplayName = lastAction?.person?.[0]?.text;
         lastActorDetails = lastActorDisplayName
