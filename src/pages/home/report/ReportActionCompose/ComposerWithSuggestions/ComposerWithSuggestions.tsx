@@ -653,10 +653,27 @@ function ComposerWithSuggestions({
 
     const prevIsModalVisible = usePrevious(modal?.isVisible);
     const prevIsFocused = usePrevious(isFocused);
+    const [visibilityState, setVisibilityState] = useState(true);
+    const prevVisibilityState = usePrevious(visibilityState);
+
+    useEffect(() => {
+        if (typeof document === 'undefined') {
+            return;
+        }
+
+        const listener = () => {
+            setVisibilityState(document.visibilityState === 'visible');
+        };
+        document.addEventListener('visibilitychange', listener);
+        return () => {
+            document.removeEventListener('visibilitychange', listener);
+        };
+    }, []);
 
     useEffect(() => {
         const isModalVisible = modal?.isVisible;
-        if (isModalVisible && !prevIsModalVisible) {
+        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+        if ((isModalVisible && !prevIsModalVisible) || (visibilityState && !prevVisibilityState)) {
             // eslint-disable-next-line react-compiler/react-compiler, no-param-reassign
             isNextModalWillOpenRef.current = false;
         }
@@ -675,7 +692,16 @@ function ComposerWithSuggestions({
         // We want to focus or refocus the input when a modal has been closed or the underlying screen is refocused.
         // We avoid doing this on native platforms since the software keyboard popping
         // open creates a jarring and broken UX.
-        if (!((willBlurTextInputOnTapOutside || shouldAutoFocus) && !isNextModalWillOpenRef.current && !isModalVisible && (!!prevIsModalVisible || !prevIsFocused))) {
+        if (
+            !(
+                (willBlurTextInputOnTapOutside || shouldAutoFocus) &&
+                !isNextModalWillOpenRef.current &&
+                // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+                !(isModalVisible || visibilityState) &&
+                // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+                (!!(prevIsModalVisible || prevVisibilityState) || !prevIsFocused)
+            )
+        ) {
             return;
         }
 
@@ -684,7 +710,19 @@ function ComposerWithSuggestions({
             return;
         }
         focus(true);
-    }, [focus, prevIsFocused, editFocused, prevIsModalVisible, isFocused, modal?.isVisible, isNextModalWillOpenRef, shouldAutoFocus, isSidePanelHiddenOrLargeScreen]);
+    }, [
+        focus,
+        visibilityState,
+        prevIsFocused,
+        editFocused,
+        prevIsModalVisible,
+        isFocused,
+        modal?.isVisible,
+        isNextModalWillOpenRef,
+        shouldAutoFocus,
+        isSidePanelHiddenOrLargeScreen,
+        prevVisibilityState,
+    ]);
 
     useEffect(() => {
         // Scrolls the composer to the bottom and sets the selection to the end, so that longer drafts are easier to edit
