@@ -11,6 +11,7 @@ function Modal({fullscreen = true, onModalHide = () => {}, type, onModalShow = (
     const theme = useTheme();
     const StyleUtils = useStyleUtils();
     const [previousStatusBarColor, setPreviousStatusBarColor] = useState<string>();
+    const triggerHideCallbackOnEventRef = useRef(false);
 
     const setStatusBarColor = (color = theme.appBG) => {
         if (!fullscreen) {
@@ -21,6 +22,9 @@ function Modal({fullscreen = true, onModalHide = () => {}, type, onModalShow = (
     };
 
     const hideModal = () => {
+        if (triggerHideCallbackOnEventRef.current) {
+            return;
+        }
         onModalHide();
     };
 
@@ -75,6 +79,12 @@ function Modal({fullscreen = true, onModalHide = () => {}, type, onModalShow = (
         rest.onModalWillHide?.();
         if ((window.history.state as WindowState)?.shouldGoBack && shouldHandleNavigationBack) {
             window.history.back();
+            triggerHideCallbackOnEventRef.current = true;
+            const handler = () => {
+                window.removeEventListener('popstate', handler);
+                onModalHide();
+            };
+            window.addEventListener('popstate', handler);
         }
     };
 

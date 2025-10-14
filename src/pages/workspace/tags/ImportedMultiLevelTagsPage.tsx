@@ -26,6 +26,7 @@ function ImportedMultiLevelTagsPage({route}: ImportedMultiLevelTagsPageProps) {
     const [isImportingTags, setIsImportingTags] = useState(false);
     const policyID = route.params.policyID;
     const columnNames = generateColumnNames(spreadsheet?.data?.length ?? 0);
+    const [shouldBeVisible, setShouldBeVisible] = useState(true);
 
     const {setIsClosing} = useCloseImportPage();
     const importTags = useCallback(() => {
@@ -45,7 +46,7 @@ function ImportedMultiLevelTagsPage({route}: ImportedMultiLevelTagsPageProps) {
     const closeImportPageAndModal = () => {
         setIsClosing(true);
         setIsImportingTags(false);
-        Navigation.goBack(ROUTES.WORKSPACE_TAGS.getRoute(policyID));
+        setShouldBeVisible(false);
     };
 
     return (
@@ -69,7 +70,7 @@ function ImportedMultiLevelTagsPage({route}: ImportedMultiLevelTagsPageProps) {
             />
 
             <ConfirmModal
-                isVisible={spreadsheet?.shouldFinalModalBeOpened}
+                isVisible={spreadsheet?.shouldFinalModalBeOpened && shouldBeVisible}
                 title={spreadsheet?.importFinalModal?.title ?? ''}
                 prompt={spreadsheet?.importFinalModal?.prompt ?? ''}
                 onConfirm={closeImportPageAndModal}
@@ -77,6 +78,7 @@ function ImportedMultiLevelTagsPage({route}: ImportedMultiLevelTagsPageProps) {
                 confirmText={translate('common.buttonConfirm')}
                 shouldShowCancelButton={false}
                 shouldHandleNavigationBack
+                onModalHide={() => Navigation.goBack(ROUTES.WORKSPACE_TAGS.getRoute(policyID))}
             />
         </ScreenWrapper>
     );

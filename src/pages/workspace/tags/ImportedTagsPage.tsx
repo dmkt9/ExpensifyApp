@@ -39,6 +39,7 @@ function ImportedTagsPage({route}: ImportedTagsPageProps) {
     const policy = usePolicy(policyID);
     const columnNames = generateColumnNames(spreadsheet?.data?.length ?? 0);
     const isQuickSettingsFlow = route.name === SCREENS.SETTINGS_TAGS.SETTINGS_TAGS_IMPORTED;
+    const [shouldBeVisible, setShouldBeVisible] = useState(true);
 
     const {setIsClosing} = useCloseImportPage();
 
@@ -129,7 +130,7 @@ function ImportedTagsPage({route}: ImportedTagsPageProps) {
     const closeImportPageAndModal = () => {
         setIsClosing(true);
         setIsImportingTags(false);
-        Navigation.goBack(isQuickSettingsFlow ? ROUTES.SETTINGS_TAGS_ROOT.getRoute(policyID, backTo) : ROUTES.WORKSPACE_TAGS.getRoute(policyID));
+        setShouldBeVisible(false);
     };
 
     return (
@@ -152,7 +153,7 @@ function ImportedTagsPage({route}: ImportedTagsPageProps) {
             />
 
             <ConfirmModal
-                isVisible={spreadsheet?.shouldFinalModalBeOpened}
+                isVisible={spreadsheet?.shouldFinalModalBeOpened && shouldBeVisible}
                 title={spreadsheet?.importFinalModal?.title ?? ''}
                 prompt={spreadsheet?.importFinalModal?.prompt ?? ''}
                 onConfirm={closeImportPageAndModal}
@@ -160,6 +161,7 @@ function ImportedTagsPage({route}: ImportedTagsPageProps) {
                 confirmText={translate('common.buttonConfirm')}
                 shouldShowCancelButton={false}
                 shouldHandleNavigationBack
+                onModalHide={() => Navigation.goBack(isQuickSettingsFlow ? ROUTES.SETTINGS_TAGS_ROOT.getRoute(policyID, backTo) : ROUTES.WORKSPACE_TAGS.getRoute(policyID))}
             />
         </ScreenWrapper>
     );
