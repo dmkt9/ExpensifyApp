@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import useStyleUtils from '@hooks/useStyleUtils';
 import useTheme from '@hooks/useTheme';
 import StatusBar from '@libs/StatusBar';
@@ -24,16 +24,15 @@ function Modal({fullscreen = true, onModalHide = () => {}, type, onModalShow = (
         onModalHide();
     };
 
-    const handlePopStateRef = useRef(() => {
-        rest.onClose?.();
-    });
+    const onCloseRef = useRef<(() => void) | undefined>(rest.onClose);
+    const handlePopState = useCallback(() => {
+        onCloseRef.current?.();
+    }, []);
 
     // This useEffect is needed so that when the onClose function changes, the ref contains the current value of this function.
     // More information can be found here: https://github.com/Expensify/App/issues/69781
     useEffect(() => {
-        handlePopStateRef.current = () => {
-            rest.onClose?.();
-        };
+        onCloseRef.current = rest.onClose;
         // eslint-disable-next-line react-compiler/react-compiler
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [rest.onClose]);
@@ -41,15 +40,17 @@ function Modal({fullscreen = true, onModalHide = () => {}, type, onModalShow = (
     const showModal = () => {
         if (shouldHandleNavigationBack) {
             window.history.pushState({shouldGoBack: true}, '', null);
-            window.addEventListener('popstate', handlePopStateRef.current);
+            window.addEventListener('popstate', handlePopState);
         }
         onModalShow?.();
     };
 
     useEffect(
         () => () => {
-            window.removeEventListener('popstate', handlePopStateRef.current);
+            window.removeEventListener('popstate', handlePopState);
         },
+        // eslint-disable-next-line react-compiler/react-compiler
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
     );
 
