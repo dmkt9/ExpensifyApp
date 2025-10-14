@@ -1520,6 +1520,9 @@ const getDescriptionForPolicyDomainCard = (domainName: string): string => {
 };
 
 function isPreferredExporter(policy: Policy) {
+    if (isPolicyAdmin(policy)) {
+        return true;
+    }
     const user = getCurrentUserEmail();
     const exporters = [
         policy.connections?.intacct?.config?.export?.exporter,
