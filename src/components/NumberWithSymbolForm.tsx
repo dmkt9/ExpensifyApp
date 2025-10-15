@@ -1,7 +1,7 @@
 import {useIsFocused} from '@react-navigation/native';
 import type {ForwardedRef} from 'react';
 import React, {useCallback, useEffect, useImperativeHandle, useRef, useState} from 'react';
-import type {NativeSyntheticEvent} from 'react-native';
+import type {NativeSyntheticEvent, StyleProp, ViewStyle} from 'react-native';
 import {View} from 'react-native';
 import useLocalize from '@hooks/useLocalize';
 import {useMouseContext} from '@hooks/useMouseContext';
@@ -79,6 +79,8 @@ type NumberWithSymbolFormProps = {
     /** Whether to allow flipping amount */
     allowFlippingAmount?: boolean;
 
+    shouldUseScrollView?: boolean;
+
     /** Reference to the outer element */
     ref?: ForwardedRef<BaseTextInputRef>;
 } & Omit<TextInputWithSymbolProps, 'formattedAmount' | 'onAmountChange' | 'placeholder' | 'onSelectionChange' | 'onKeyPress' | 'onMouseDown' | 'onMouseUp'>;
@@ -102,6 +104,10 @@ const getNewSelection = (oldSelection: {start: number; end: number}, prevLength:
 const NUMBER_VIEW_ID = 'numberView';
 const NUM_PAD_CONTAINER_VIEW_ID = 'numPadContainerView';
 const NUM_PAD_VIEW_ID = 'numPadView';
+
+function Container({children, contentContainerStyle, shouldUseScrollView}: {shouldUseScrollView: boolean; children: React.ReactNode; contentContainerStyle: StyleProp<ViewStyle>}) {
+    return shouldUseScrollView ? <ScrollView contentContainerStyle={contentContainerStyle}>{children}</ScrollView> : <View>{children}</View>;
+}
 
 /**
  * Generic number input form with symbol (currency or unit).
@@ -140,6 +146,7 @@ function NumberWithSymbolForm({
     allowFlippingAmount = false,
     toggleNegative,
     clearNegative,
+    shouldUseScrollView = true,
     ref,
     ...props
 }: NumberWithSymbolFormProps) {
@@ -450,7 +457,10 @@ function NumberWithSymbolForm({
     );
 
     return (
-        <ScrollView contentContainerStyle={styles.flexGrow1}>
+        <Container
+            contentContainerStyle={styles.flexGrow1}
+            shouldUseScrollView={shouldUseScrollView}
+        >
             {shouldWrapInputInContainer ? (
                 <View style={[styles.flex1, styles.justifyContentCenter, styles.alignItemsCenter]}>
                     <View
@@ -528,7 +538,7 @@ function NumberWithSymbolForm({
                     {footer}
                 </View>
             ) : null}
-        </ScrollView>
+        </Container>
     );
 }
 

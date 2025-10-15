@@ -705,6 +705,7 @@ function MoneyRequestConfirmationList({
                     shouldApplyPaddingToContainer
                     shouldUseDefaultLineHeightForPrefix={false}
                     shouldWrapInputInContainer={false}
+                    shouldUseScrollView={false}
                 />
             ),
         }));

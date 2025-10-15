@@ -116,6 +116,8 @@ type MoneyRequestAmountInputProps = {
      */
     shouldWrapInputInContainer?: boolean;
 
+    shouldUseScrollView?: boolean;
+
     /** Reference to the outer element */
     ref?: ForwardedRef<BaseTextInputRef>;
 } & Pick<TextInputWithSymbolProps, 'autoGrowExtraSpace' | 'submitBehavior' | 'shouldUseDefaultLineHeightForPrefix' | 'onFocus' | 'onBlur'>;
@@ -159,6 +161,7 @@ function MoneyRequestAmountInput({
     allowFlippingAmount = false,
     toggleNegative,
     clearNegative,
+    shouldUseScrollView = true,
     ref,
     ...props
 }: MoneyRequestAmountInputProps) {
@@ -252,6 +255,7 @@ function MoneyRequestAmountInput({
             toggleNegative={toggleNegative}
             clearNegative={clearNegative}
             onFocus={props.onFocus}
+            shouldUseScrollView={shouldUseScrollView}
         />
     );
 }
