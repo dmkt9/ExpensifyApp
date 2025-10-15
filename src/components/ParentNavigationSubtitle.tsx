@@ -1,7 +1,7 @@
 import {useRoute} from '@react-navigation/native';
 import React from 'react';
 import type {ColorValue, StyleProp, TextStyle} from 'react-native';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import useHover from '@hooks/useHover';
 import useLocalize from '@hooks/useLocalize';
 import useOnyx from '@hooks/useOnyx';
@@ -116,8 +116,11 @@ function ParentNavigationSubtitle({
         }
     };
 
+    const {marginTop, marginBottom, marginVertical, ...restPressableStyles} = StyleSheet.flatten(pressableStyles) ?? {};
+    const clampStyles = [styles.overflowHidden, StyleUtils.getTextOverflowStyle('ellipsis'), styles.flex1, {maxWidth: 'fit-content'}];
+
     return (
-        <View style={[styles.flexRow, styles.alignItemsCenter]}>
+        <View style={[styles.flexRow, styles.alignItemsCenter, styles.mw100]}>
             {!!statusText && (
                 <View
                     style={[
@@ -132,7 +135,7 @@ function ParentNavigationSubtitle({
                 </View>
             )}
             <Text
-                style={[styles.optionAlternateText, styles.textLabelSupporting, styles.flex1]}
+                style={[styles.optionAlternateText, styles.textLabelSupporting, styles.flex1, styles.dInlineFlex, styles.gap1, {marginTop, marginBottom, marginVertical}]}
                 numberOfLines={1}
             >
                 {!!reportName && (
@@ -143,14 +146,20 @@ function ParentNavigationSubtitle({
                             onMouseLeave={onMouseLeave}
                             onPress={onPress}
                             accessibilityLabel={translate('threads.parentNavigationSummary', {reportName, workspaceName})}
-                            style={[pressableStyles, styles.optionAlternateText, styles.textLabelSupporting, hovered ? StyleUtils.getColorStyle(theme.linkHover) : styles.link]}
+                            style={[
+                                restPressableStyles,
+                                styles.optionAlternateText,
+                                styles.textLabelSupporting,
+                                hovered ? StyleUtils.getColorStyle(theme.linkHover) : styles.link,
+                                clampStyles,
+                            ]}
                         >
                             {reportName}
                         </TextLink>
                     </>
                 )}
                 {!!workspaceName && workspaceName !== reportName && (
-                    <Text style={[styles.optionAlternateText, styles.textLabelSupporting]}>{` ${translate('threads.in')} ${workspaceName}`}</Text>
+                    <Text style={[styles.optionAlternateText, styles.textLabelSupporting, clampStyles]}>{` ${translate('threads.in')} ${workspaceName}`}</Text>
                 )}
             </Text>
         </View>
