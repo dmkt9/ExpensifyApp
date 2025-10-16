@@ -1,4 +1,4 @@
-import React, {useCallback} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import FullScreenLoadingIndicator from '@components/FullscreenLoadingIndicator';
 import HeaderWithBackButton from '@components/HeaderWithBackButton';
 import {useSession} from '@components/OnyxListItemProvider';
@@ -11,6 +11,7 @@ import useNetwork from '@hooks/useNetwork';
 import useOnyx from '@hooks/useOnyx';
 import useReportIsArchived from '@hooks/useReportIsArchived';
 import useThemeStyles from '@hooks/useThemeStyles';
+import useTransactionsAndViolationsForReport from '@hooks/useTransactionsAndViolationsForReport';
 import type {WorkspaceListItem} from '@hooks/useWorkspaceList';
 import useWorkspaceList from '@hooks/useWorkspaceList';
 import {changeReportPolicy, changeReportPolicyAndInviteSubmitter, moveIOUReportToPolicy, moveIOUReportToPolicyAndInviteSubmitter} from '@libs/actions/Report';
@@ -19,7 +20,7 @@ import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavig
 import type {ReportChangeWorkspaceNavigatorParamList} from '@libs/Navigation/types';
 import Permissions from '@libs/Permissions';
 import {getLoginByAccountID} from '@libs/PersonalDetailsUtils';
-import {isPolicyAdmin, isPolicyMember} from '@libs/PolicyUtils';
+import {canSubmitPerDiemExpenseFromWorkspace, isPolicyAdmin, isPolicyMember} from '@libs/PolicyUtils';
 import {
     hasViolations as hasViolationsReportUtils,
     isExpenseReport,
@@ -28,6 +29,7 @@ import {
     isMoneyRequestReportPendingDeletion,
     isWorkspaceEligibleForReportChange,
 } from '@libs/ReportUtils';
+import {isPerDiemRequest} from '@libs/TransactionUtils';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import type SCREENS from '@src/SCREENS';
@@ -116,6 +118,8 @@ function ReportChangeWorkspacePage({report, route}: ReportChangeWorkspacePagePro
         ],
     );
 
+    const {transactions: reportTransactions} = useTransactionsAndViolationsForReport(report?.reportID);
+    const hasPerdiemTransaction = useMemo(() => Object.values(reportTransactions).some((transaction) => isPerDiemRequest(transaction)), []);
     const {sections, shouldShowNoResultsFoundMessage, shouldShowSearchInput} = useWorkspaceList({
         policies,
         currentUserLogin: session?.email,
@@ -123,7 +127,7 @@ function ReportChangeWorkspacePage({report, route}: ReportChangeWorkspacePagePro
         selectedPolicyIDs: report.policyID ? [report.policyID] : undefined,
         searchTerm: debouncedSearchTerm,
         localeCompare,
-        additionalFilter: (newPolicy) => isWorkspaceEligibleForReportChange(submitterEmail, newPolicy),
+        additionalFilter: (newPolicy) => isWorkspaceEligibleForReportChange(submitterEmail, newPolicy) && (!hasPerdiemTransaction || canSubmitPerDiemExpenseFromWorkspace(newPolicy)),
     });
 
     if (!isMoneyRequestReport(report) || isMoneyRequestReportPendingDeletion(report)) {

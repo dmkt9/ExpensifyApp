@@ -8,6 +8,7 @@ import {getCurrentUserAccountID, getCurrentUserEmail} from './actions/Report';
 import {getLoginByAccountID} from './PersonalDetailsUtils';
 import {
     arePaymentsEnabled as arePaymentsEnabledUtils,
+    canSubmitPerDiemExpenseFromWorkspace,
     getConnectedIntegration,
     getCorrectedAutoReportingFrequency,
     getSubmitToAccountID,
@@ -60,6 +61,7 @@ import {
     isDuplicate,
     isOnHold as isOnHoldTransactionUtils,
     isPending,
+    isPerDiemRequest,
     isReceiptBeingScanned,
     shouldShowBrokenConnectionViolationForMultipleTransactions,
 } from './TransactionUtils';
@@ -441,14 +443,16 @@ function isHoldActionForTransaction(report: Report, reportTransaction: Transacti
     return isProcessingReport;
 }
 
-function isChangeWorkspaceAction(report: Report, policies: OnyxCollection<Policy>, reportActions?: ReportAction[]): boolean {
+function isChangeWorkspaceAction(report: Report, policies: OnyxCollection<Policy>, reportActions?: ReportAction[], hasPerdiemTransaction?: boolean): boolean {
     // We can't move the iou report to the workspace if both users from the iou report create the expense
     if (isIOUReportUtils(report) && doesReportContainRequestsFromMultipleUsers(report)) {
         return false;
     }
 
     const submitterEmail = getLoginByAccountID(report?.ownerAccountID ?? CONST.DEFAULT_NUMBER_ID);
-    const availablePolicies = Object.values(policies ?? {}).filter((newPolicy) => isWorkspaceEligibleForReportChange(submitterEmail, newPolicy));
+    const availablePolicies = Object.values(policies ?? {}).filter(
+        (newPolicy) => isWorkspaceEligibleForReportChange(submitterEmail, newPolicy) && (!hasPerdiemTransaction || canSubmitPerDiemExpenseFromWorkspace(newPolicy)),
+    );
     let hasAvailablePolicies = availablePolicies.length > 1;
     if (!hasAvailablePolicies && availablePolicies.length === 1) {
         hasAvailablePolicies = !report.policyID || report.policyID !== availablePolicies?.at(0)?.id;
@@ -657,7 +661,14 @@ function getSecondaryReportActions({
 
     options.push(CONST.REPORT.SECONDARY_ACTIONS.DOWNLOAD_PDF);
 
-    if (isChangeWorkspaceAction(report, policies, reportActions)) {
+    if (
+        isChangeWorkspaceAction(
+            report,
+            policies,
+            reportActions,
+            reportTransactions.some((transaction) => isPerDiemRequest(transaction)),
+        )
+    ) {
         options.push(CONST.REPORT.SECONDARY_ACTIONS.CHANGE_WORKSPACE);
     }
 
