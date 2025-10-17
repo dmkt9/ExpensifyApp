@@ -5,14 +5,20 @@ import ONYXKEYS from '@src/ONYXKEYS';
 import type {TransactionViolation, TransactionViolations} from '@src/types/onyx';
 import getEmptyArray from '@src/types/utils/getEmptyArray';
 import useOnyx from './useOnyx';
+import useTransactionsAndViolationsForReport from './useTransactionsAndViolationsForReport';
 
 function useTransactionViolations(transactionID?: string, shouldShowRterForSettledReport = true): TransactionViolations {
     const [transaction] = useOnyx(`${ONYXKEYS.COLLECTION.TRANSACTION}${getNonEmptyStringOnyxID(transactionID)}`, {
         canBeMissing: true,
     });
-    const [transactionViolations = getEmptyArray<TransactionViolation>()] = useOnyx(`${ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS}${transactionID}`, {
+
+    const {violations} = useTransactionsAndViolationsForReport(transaction?.reportID);
+    const allTransactionViolations = violations[`${ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS}${transactionID}`] ?? getEmptyArray<TransactionViolation>();
+    const [transactionViolationsFromSnapshot] = useOnyx(`${ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS}${transactionID}`, {
         canBeMissing: true,
     });
+    const transactionViolations = transactionViolationsFromSnapshot ?? allTransactionViolations;
+
     const [iouReport] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT}${transaction?.reportID}`, {
         canBeMissing: true,
     });
