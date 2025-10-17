@@ -753,7 +753,8 @@ function Search({queryJSON, searchResults, onSearchListScroll, contentContainerS
                     : `${ONYXKEYS.COLLECTION.TRANSACTION}${(item as TransactionListItemType).transactionID}`;
 
                 // Check if the base key matches the newSearchResultKey (TransactionListItemType)
-                const isBaseKeyMatch = baseKey === newSearchResultKey;
+                const isBaseKeyMatch =
+                    baseKey === newSearchResultKey || (!isChat && newTransactions.some((transaction) => transaction.transactionID === (item as TransactionListItemType).transactionID));
 
                 // Check if any transaction within the transactions array (TransactionGroupListItemType) matches the newSearchResultKey
                 const isAnyTransactionMatch =
@@ -768,7 +769,7 @@ function Search({queryJSON, searchResults, onSearchListScroll, contentContainerS
 
                 return mapToItemWithAdditionalInfo(item, selectedTransactions, canSelectMultiple, shouldAnimateInHighlight, hash);
             }),
-        [type, status, data, sortBy, sortOrder, groupBy, isChat, newSearchResultKey, selectedTransactions, canSelectMultiple, localeCompare, hash],
+        [type, status, data, sortBy, sortOrder, groupBy, isChat, newSearchResultKey, selectedTransactions, canSelectMultiple, localeCompare, hash, newTransactions],
     );
 
     const hasErrors = Object.keys(searchResults?.errors ?? {}).length > 0 && !isOffline;
