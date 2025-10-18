@@ -21,6 +21,11 @@ function AttachmentModalScreen<Screen extends AttachmentModalScreenType>({route,
     const routeWithContext = useMemo(() => {
         const currentAttachment = attachmentsContext.getCurrentAttachment<Screen>();
 
+        if (route.params && 'accountID' in route.params) {
+            // eslint-disable-next-line react-compiler/react-compiler, no-param-reassign
+            route.params.accountID = Number(route.params.accountID);
+        }
+
         if (currentAttachment) {
             return {...route, params: {...route.params, ...currentAttachment}};
         }
