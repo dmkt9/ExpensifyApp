@@ -82,13 +82,13 @@ function TextCommentFragment({fragment, styleAsDeleted, reportActionID, styleAsM
 
         let htmlContent = htmlWithDeletedTag;
         if (containsOnlyEmojis) {
-            htmlContent = Str.replaceAll(htmlContent, '<emoji>', '<emoji islarge>');
+            htmlContent = Str.replaceAll(htmlContent, '<emoji>', `<emoji islarge ${styleAsDeleted ? 'deleted' : ''}>`);
         } else if (containsEmojis) {
             htmlContent = htmlWithDeletedTag;
             if (!htmlContent.includes('<emoji>')) {
                 htmlContent = Parser.replace(htmlContent, {filterRules: ['emoji'], shouldEscapeText: false});
             }
-            htmlContent = Str.replaceAll(htmlContent, '<emoji>', '<emoji ismedium>');
+            htmlContent = Str.replaceAll(htmlContent, '<emoji>', `<emoji ismedium ${styleAsDeleted ? 'deleted' : ''}>`);
         }
 
         let htmlWithTag = editedTag ? `${htmlContent}${editedTag}` : htmlContent;

@@ -17,9 +17,12 @@ function EmojiRenderer({tnode, style: styleProp}: CustomRendererProps<TText | TP
 
         return null;
     }, [tnode.attributes, styles, styleProp]);
+
+    const isPendingDelete = !!(tnode.attributes.deleted !== undefined);
+
     return (
         <EmojiWithTooltip
-            style={[style, styles.cursorDefault, styles.emojiDefaultStyles]}
+            style={[style, styles.cursorDefault, styles.emojiDefaultStyles, isPendingDelete && styles.offlineFeedbackDeleted]}
             emojiCode={'data' in tnode ? tnode.data : ''}
             isMedium={'ismedium' in tnode.attributes}
         />
