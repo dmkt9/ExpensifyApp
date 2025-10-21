@@ -20,6 +20,7 @@ import {
     isTripRoom,
     shouldReportShowSubscript,
 } from '@libs/ReportUtils';
+import {getDefaultAvatarURL} from '@libs/UserUtils';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import type {InvitedEmailsToAccountIDs, OnyxInputOrEntry, Report, ReportAction} from '@src/types/onyx';
@@ -195,7 +196,7 @@ function useReportActionAvatars({
 
     // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
     const accountID = reportPreviewSenderID || (actorAccountID ?? CONST.DEFAULT_NUMBER_ID);
-    const {avatar, fallbackIcon, login} = personalDetails?.[delegatePersonalDetails ? delegatePersonalDetails.accountID : accountID] ?? {};
+    const {avatar, fallbackIcon, login, isOptimisticPersonalDetail} = personalDetails?.[delegatePersonalDetails ? delegatePersonalDetails.accountID : accountID] ?? {};
 
     const defaultDisplayName = getDisplayNameForParticipant({accountID, personalDetailsData: personalDetails}) ?? '';
     const invoiceReport = [iouReport, chatReport, reportChatReport].find((susReport) => isInvoiceReport(susReport) || susReport?.chatType === CONST.REPORT.TYPE.INVOICE);
@@ -235,7 +236,7 @@ function useReportActionAvatars({
     };
 
     const userFallbackAvatar: IconType = {
-        source: avatar ?? FallbackAvatar,
+        source: avatar ?? (isOptimisticPersonalDetail ? getDefaultAvatarURL(accountID) : FallbackAvatar),
         id: accountID,
         name: defaultDisplayName ?? fallbackDisplayName,
         type: CONST.ICON_TYPE_AVATAR,
