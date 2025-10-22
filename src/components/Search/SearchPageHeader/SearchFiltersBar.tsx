@@ -1,5 +1,6 @@
 import {emailSelector} from '@selectors/Session';
 import {searchResultsErrorSelector} from '@selectors/Snapshot';
+import {Str} from 'expensify-common';
 import React, {useCallback, useContext, useEffect, useMemo, useRef} from 'react';
 import type {ReactNode} from 'react';
 import {View} from 'react-native';
@@ -454,7 +455,7 @@ function SearchFiltersBar({
      * filter bar
      */
     const filters = useMemo<FilterItem[]>(() => {
-        const fromValue = filterFormValues.from?.map((currentAccountID) => personalDetails?.[currentAccountID]?.displayName ?? currentAccountID) ?? [];
+        const fromValue = filterFormValues.from?.map((currentAccountID) => Str.removeSMSDomain(personalDetails?.[currentAccountID]?.displayName ?? currentAccountID)) ?? [];
 
         const shouldDisplayGroupByFilter = !!groupBy?.value && groupBy?.value !== CONST.SEARCH.GROUP_BY.REPORTS;
         const shouldDisplayGroupCurrencyFilter = shouldDisplayGroupByFilter && hasMultipleOutputCurrency;

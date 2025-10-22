@@ -1,3 +1,4 @@
+import {Str} from 'expensify-common';
 import cloneDeep from 'lodash/cloneDeep';
 import type {OnyxCollection} from 'react-native-onyx';
 import type {ValueOf} from 'type-fest';
@@ -856,7 +857,7 @@ function getFilterDisplayValue(
     ) {
         // login can be an empty string
         // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-        return filterValue === currentUserAccountID.toString() ? CONST.SEARCH.ME : personalDetails?.[filterValue]?.displayName || filterValue;
+        return filterValue === currentUserAccountID.toString() ? CONST.SEARCH.ME : Str.removeSMSDomain(personalDetails?.[filterValue]?.displayName || filterValue);
     }
     if (filterName === CONST.SEARCH.SYNTAX_FILTER_KEYS.CARD_ID) {
         const cardID = parseInt(filterValue, 10);
