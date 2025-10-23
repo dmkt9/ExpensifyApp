@@ -30,7 +30,6 @@ import {mergeCardListWithWorkspaceFeeds} from '@libs/CardUtils';
 import {scrollToRight} from '@libs/InputUtils';
 import Log from '@libs/Log';
 import backHistory from '@libs/Navigation/helpers/backHistory';
-import type {SearchOption} from '@libs/OptionsListUtils';
 import {getPolicyNameByID} from '@libs/PolicyUtils';
 import type {OptionData} from '@libs/ReportUtils';
 import {getAutocompleteQueryWithComma, getQueryWithoutAutocompletedPart} from '@libs/SearchAutocompleteUtils';
@@ -44,7 +43,6 @@ import CONST, {CONTINUATION_DETECTION_SEARCH_FILTER_KEYS} from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
 import SCREENS from '@src/SCREENS';
-import type Report from '@src/types/onyx/Report';
 import isLoadingOnyxValue from '@src/types/utils/isLoadingOnyxValue';
 import type {SubstitutionMap} from './getQueryWithSubstitutions';
 import {getQueryWithSubstitutions} from './getQueryWithSubstitutions';
@@ -131,7 +129,7 @@ function SearchRouter({onRouterClose, shouldHideInputCaret, isSearchRouterDispla
     });
 
     const getAdditionalSections: GetAdditionalSectionsCallback = useCallback(
-        ({recentReports}) => {
+        (allOptionReports) => {
             if (!contextualReportID) {
                 return undefined;
             }
@@ -145,7 +143,7 @@ function SearchRouter({onRouterClose, shouldHideInputCaret, isSearchRouterDispla
                 return undefined;
             }
 
-            const reportForContextualSearch = recentReports.find((option) => option.reportID === contextualReportID);
+            const reportForContextualSearch = allOptionReports.find((option) => option.reportID === contextualReportID);
             if (!reportForContextualSearch) {
                 return undefined;
             }
@@ -157,7 +155,7 @@ function SearchRouter({onRouterClose, shouldHideInputCaret, isSearchRouterDispla
 
             if (reportForContextualSearch.isInvoiceRoom) {
                 roomType = CONST.SEARCH.DATA_TYPES.INVOICE;
-                const report = reportForContextualSearch as SearchOption<Report>;
+                const report = reportForContextualSearch;
                 if (report.item && report.item?.invoiceReceiver && report.item.invoiceReceiver?.type === CONST.REPORT.INVOICE_RECEIVER_TYPE.INDIVIDUAL) {
                     autocompleteID = report.item.invoiceReceiver.accountID.toString();
                 } else {

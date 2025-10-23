@@ -18,7 +18,7 @@ import useThemeStyles from '@hooks/useThemeStyles';
 import {getCardFeedsForDisplay} from '@libs/CardFeedUtils';
 import {getCardDescription, isCard, isCardHiddenFromSearch} from '@libs/CardUtils';
 import Log from '@libs/Log';
-import type {Options} from '@libs/OptionsListUtils';
+import type {SearchOption} from '@libs/OptionsListUtils';
 import {combineOrderingOfReportsAndPersonalDetails, getSearchOptions} from '@libs/OptionsListUtils';
 import Performance from '@libs/Performance';
 import {getAllTaxRates, getCleanedTagName, shouldShowPolicy} from '@libs/PolicyUtils';
@@ -59,7 +59,7 @@ type AutocompleteItemData = {
     mapKey?: SearchFilterKey;
 };
 
-type GetAdditionalSectionsCallback = (options: Options) => Array<SectionListDataType<OptionData | SearchQueryItem>> | undefined;
+type GetAdditionalSectionsCallback = (reports: Array<SearchOption<Report>>) => Array<SectionListDataType<OptionData | SearchQueryItem>> | undefined;
 
 type SearchAutocompleteListProps = {
     /** Value of TextInput */
@@ -748,8 +748,8 @@ function SearchAutocompleteList({
     }
 
     const additionalSections = useMemo(() => {
-        return getAdditionalSections?.(searchOptions);
-    }, [getAdditionalSections, searchOptions]);
+        return getAdditionalSections?.(options.reports);
+    }, [getAdditionalSections, options.reports]);
 
     if (additionalSections) {
         sections.push(...additionalSections);
