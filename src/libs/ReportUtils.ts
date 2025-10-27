@@ -6032,6 +6032,10 @@ function navigateOnDeleteExpense(backToRoute: Route) {
     Navigation.goBack(backToRoute);
 }
 
+function isValidReportID(reportID: string) {
+    return /^\d+$/.test(reportID) && reportID.length <= Number.MAX_SAFE_INTEGER.toString().length;
+}
+
 /**
  * Generate a random reportID up to 53 bits aka 9,007,199,254,740,991 (Number.MAX_SAFE_INTEGER).
  * There were approximately 98,000,000 reports with sequential IDs generated before we started using this approach, those make up roughly one billionth of the space for these numbers,
@@ -12581,6 +12585,7 @@ export {
     hasUnresolvedCardFraudAlert,
     getUnresolvedCardFraudAlertAction,
     shouldBlockSubmitDueToStrictPolicyRules,
+    isValidReportID,
 };
 export type {
     Ancestor,

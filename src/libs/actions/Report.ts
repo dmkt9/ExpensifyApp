@@ -161,6 +161,7 @@ import {
     isReportManuallyReimbursed,
     isSelfDM,
     isUnread,
+    isValidReportID,
     isValidReportIDFromPath,
     populateOptimisticReportFormula,
     prepareOnboardingOnyxData,
@@ -3592,6 +3593,7 @@ function openReportFromDeepLink(
                             // then we will wait for Onyx to completely merge data from OpenReport API with OpenApp API in AuthScreens
                             if (
                                 reportID &&
+                                isValidReportID(reportID) &&
                                 !isAuthenticated &&
                                 (!reports?.[`${ONYXKEYS.COLLECTION.REPORT}${reportID}`] || !reports?.[`${ONYXKEYS.COLLECTION.REPORT}${reportID}`]?.reportID)
                             ) {
