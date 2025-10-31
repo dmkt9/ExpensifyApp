@@ -10248,6 +10248,74 @@ function getOptimisticDataForParentReportAction(report: Report | undefined, last
     });
 }
 
+/**
+ * Get optimistic data for the parent report action when deleting an expense
+ */
+function getOptimisticCleanUpMoneyRequestDataForParentReportAction(reportID: string | undefined) {
+    const report = getReportOrDraftReport(reportID);
+
+    if (!report || isEmptyObject(report)) {
+        return [];
+    }
+
+    const iouReport = getReportOrDraftReport(report.parentReportID);
+    const iouReportAction = getReportAction(iouReport?.reportID, report.parentReportActionID);
+
+    const lastVisibleActionForIOUReport = getLastVisibleAction(iouReport?.reportID, true, {
+        [iouReportAction?.reportActionID ?? CONST.DEFAULT_NUMBER_ID]: {...iouReportAction, pendingAction: CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE},
+    });
+    const chatReport = getReportOrDraftReport(iouReport?.parentReportID);
+    const previewReportAction = getReportAction(iouReport?.parentReportID, iouReport?.parentReportActionID);
+
+    const getUpdatedReportAction = (
+        ancestorReport: Report | undefined,
+        ancestorReportAction: ReportAction | undefined,
+        lastVisibleActionCreated: string,
+        deleteBy = 0,
+    ): Record<'optimisticData' | 'failureData', OnyxUpdate> | null => {
+        if (!ancestorReport || isEmptyObject(ancestorReport) || !ancestorReportAction || isEmptyObject(ancestorReportAction)) {
+            return null;
+        }
+
+        const updatedReportAction = updateOptimisticParentReportAction(ancestorReportAction, lastVisibleActionCreated, CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE, deleteBy);
+
+        return {
+            optimisticData: {
+                onyxMethod: Onyx.METHOD.MERGE,
+                key: `${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${ancestorReport.reportID}`,
+                value: {
+                    [ancestorReportAction.reportActionID]: updatedReportAction,
+                },
+            },
+            failureData: {
+                onyxMethod: Onyx.METHOD.MERGE,
+                key: `${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${ancestorReport.reportID}`,
+                value: {
+                    [ancestorReportAction.reportActionID]: {
+                        childVisibleActionCount: ancestorReportAction.childVisibleActionCount,
+                        childCommenterCount: ancestorReportAction.childCommenterCount,
+                        childLastVisibleActionCreated: ancestorReportAction.childLastVisibleActionCreated,
+                        childOldestFourAccountIDs: ancestorReportAction.childOldestFourAccountIDs,
+                    },
+                },
+            },
+        };
+    };
+
+    const childVisibleActionCountToDelete = iouReportAction?.childVisibleActionCount ?? 0;
+
+    const updatedIOUReportAction = getUpdatedReportAction(iouReport, iouReportAction, '', childVisibleActionCountToDelete);
+
+    const updatedPreviewReportAction = getUpdatedReportAction(
+        chatReport,
+        previewReportAction,
+        lastVisibleActionForIOUReport?.childLastVisibleActionCreated ?? lastVisibleActionForIOUReport?.created ?? '',
+        childVisibleActionCountToDelete,
+    );
+
+    return [updatedIOUReportAction, updatedPreviewReportAction];
+}
+
 function canBeAutoReimbursed(report: OnyxInputOrEntry<Report>, policy: OnyxInputOrEntry<Policy> | SearchPolicy): boolean {
     if (isEmptyObject(policy)) {
         return false;
@@ -12297,6 +12365,7 @@ export {
     getMoneyRequestSpendBreakdown,
     getNonHeldAndFullAmount,
     getOptimisticDataForParentReportAction,
+    getOptimisticCleanUpMoneyRequestDataForParentReportAction,
     getOriginalReportID,
     getOutstandingChildRequest,
     getParentNavigationSubtitle,

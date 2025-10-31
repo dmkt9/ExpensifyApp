@@ -159,6 +159,7 @@ import {
     getDisplayedReportID,
     getMoneyRequestSpendBreakdown,
     getNextApproverAccountID,
+    getOptimisticCleanUpMoneyRequestDataForParentReportAction,
     getOptimisticDataForParentReportAction,
     getOutstandingChildRequest,
     getParsedComment,
@@ -8654,6 +8655,8 @@ function deleteMoneyRequest(
         reportPreviewAction,
     } = prepareToCleanUpMoneyRequest(transactionID, reportAction, iouReport, chatReport, isChatIOUReportArchived, false, transactionIDsPendingDeletion, selectedTransactionIDs);
 
+    const optimisticParentReportData = getOptimisticCleanUpMoneyRequestDataForParentReportAction(reportAction.childReportID);
+
     const urlToNavigateBack = getNavigationUrlOnMoneyRequestDelete(transactionID, reportAction, iouReport, chatReport, isChatIOUReportArchived, isSingleTransactionView);
 
     // STEP 2: Build Onyx data
@@ -8733,6 +8736,14 @@ function deleteMoneyRequest(
             value: {[reportPreviewAction.reportActionID]: updatedReportPreviewAction},
         });
     }
+
+    optimisticParentReportData.forEach((parentReportData) => {
+        if (isEmptyObject(parentReportData)) {
+            return;
+        }
+        optimisticData.push(parentReportData.optimisticData);
+        failureData.push(parentReportData.failureData);
+    });
 
     if (chatReport && updatedIOUReport && !shouldDeleteIOUReport && updatedReportPreviewAction?.childMoneyRequestCount === 0) {
         optimisticData.push({
