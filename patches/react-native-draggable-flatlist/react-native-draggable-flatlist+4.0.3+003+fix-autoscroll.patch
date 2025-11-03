@@ -1,0 +1,58 @@
+diff --git a/node_modules/react-native-draggable-flatlist/src/hooks/useAutoScroll.tsx b/node_modules/react-native-draggable-flatlist/src/hooks/useAutoScroll.tsx
+index d3add83..6bf70b3 100644
+--- a/node_modules/react-native-draggable-flatlist/src/hooks/useAutoScroll.tsx
++++ b/node_modules/react-native-draggable-flatlist/src/hooks/useAutoScroll.tsx
+@@ -8,6 +8,7 @@ import { DEFAULT_PROPS, SCROLL_POSITION_TOLERANCE } from "../constants";
+ import { useProps } from "../context/propsContext";
+ import { useAnimatedValues } from "../context/animatedValueContext";
+ import { useRefs } from "../context/refContext";
++import { useRef } from "react";
+ 
+ export function useAutoScroll() {
+   const { flatlistRef } = useRefs();
+@@ -74,6 +75,21 @@ export function useAutoScroll() {
+     }
+   );
+ 
++  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
++
++  function scrollToInternal(offset: number, delay = false) {
++    if (flatlistRef && "current" in flatlistRef) {
++      if(delay){
++        clearTimeout(timeoutRef.current);
++        timeoutRef.current = setTimeout(()=>{
++          flatlistRef.current?.scrollToOffset({ offset, animated: true });
++        }, 50)
++        return;
++      }
++      flatlistRef.current?.scrollToOffset({ offset, animated: true });
++    }
++  }
++  
+   const shouldAutoScroll = useDerivedValue(() => {
+     const scrollTargetDiff = Math.abs(scrollTarget.value - scrollOffset.value);
+     const hasScrolledToTarget = scrollTargetDiff < SCROLL_POSITION_TOLERANCE;
+@@ -85,14 +101,17 @@ export function useAutoScroll() {
+ 
+     const cellIsActive = activeIndexAnim.value >= 0;
+ 
+-    return hasScrolledToTarget && isAtEdge && !isEdgeDisabled && cellIsActive;
++    if(!(isAtEdge && !isEdgeDisabled && cellIsActive)) {
++      return false;
++    }
++    if(!hasScrolledToTarget){
++      runOnJS(scrollToInternal)(scrollTarget.value, true);
++      return false;
++    }
++    return true;
+   }, []);
+ 
+-  function scrollToInternal(offset: number) {
+-    if (flatlistRef && "current" in flatlistRef) {
+-      flatlistRef.current?.scrollToOffset({ offset, animated: true });
+-    }
+-  }
++  
+ 
+   useDerivedValue(() => {
+     if (!shouldAutoScroll.value) return;
