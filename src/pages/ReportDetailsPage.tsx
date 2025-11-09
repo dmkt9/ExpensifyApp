@@ -679,7 +679,7 @@ function ReportDetailsPage({policy, report, route, reportMetadata}: ReportDetail
     }, [canJoin, report, backTo]);
 
     const nameSectionExpenseIOU = (
-        <View style={[styles.reportDetailsRoomInfo, styles.mw100]}>
+        <View style={[styles.flex1, styles.mw100]}>
             {shouldDisableRename && (
                 <>
                     <View style={[styles.alignSelfCenter, styles.w100, styles.mt1]}>
@@ -722,6 +722,7 @@ function ReportDetailsPage({policy, report, route, reportMetadata}: ReportDetail
                     parentReportID={report?.parentReportID}
                     parentReportActionID={report?.parentReportActionID}
                     pressableStyles={[styles.mt1, styles.mw100]}
+                    textStyles={[styles.textAlignCenter]}
                 />
             )}
         </View>
