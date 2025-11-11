@@ -134,7 +134,7 @@ function ShareCodePage({report, policy, backTo}: ShareCodePageProps) {
                         title={title}
                         subtitle={subtitle}
                         logo={logo}
-                        logoRatio={logo === expensifyLogo ? CONST.QR.EXPENSIFY_LOGO_SIZE_RATIO : CONST.QR.DEFAULT_LOGO_SIZE_RATIO}
+                        logoRatio={logo === expensifyLogo || svgLogo ? CONST.QR.EXPENSIFY_LOGO_SIZE_RATIO : CONST.QR.DEFAULT_LOGO_SIZE_RATIO}
                         logoMarginRatio={logo === expensifyLogo ? CONST.QR.EXPENSIFY_LOGO_MARGIN_RATIO : CONST.QR.DEFAULT_LOGO_MARGIN_RATIO}
                         svgLogo={svgLogo}
                         svgLogoFillColor={svgLogoFillColor}
