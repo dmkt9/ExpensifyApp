@@ -673,6 +673,7 @@ function changeTransactionsReport(
     const optimisticData: OnyxUpdate[] = [];
     const failureData: OnyxUpdate[] = [];
     const successData: OnyxUpdate[] = [];
+    const finallyData: OnyxUpdate[] = [];
 
     const existingSelfDMReportID = findSelfDMReportID();
     let selfDMReport: Report | undefined;
@@ -709,34 +710,8 @@ function changeTransactionsReport(
             },
         );
 
-        // Add success data for self DM report
-        successData.push(
-            {
-                onyxMethod: Onyx.METHOD.MERGE,
-                key: `${ONYXKEYS.COLLECTION.REPORT}${selfDMReport.reportID}`,
-                value: {
-                    pendingFields: {
-                        createChat: null,
-                    },
-                },
-            },
-            {
-                onyxMethod: Onyx.METHOD.MERGE,
-                key: `${ONYXKEYS.COLLECTION.REPORT_METADATA}${selfDMReport.reportID}`,
-                value: {isOptimisticReport: false},
-            },
-            {
-                onyxMethod: Onyx.METHOD.MERGE,
-                key: `${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${selfDMReport.reportID}`,
-                value: {
-                    [selfDMCreatedReportAction.reportActionID]: {
-                        pendingAction: null,
-                    },
-                },
-            },
-        );
-        // Add failure data for self DM report
-        failureData.push(
+        // Add finally data for self DM report
+        finallyData.push(
             {
                 onyxMethod: Onyx.METHOD.MERGE,
                 key: `${ONYXKEYS.COLLECTION.REPORT}${selfDMReport.reportID}`,
@@ -1287,6 +1262,7 @@ function changeTransactionsReport(
         optimisticData,
         successData,
         failureData,
+        finallyData,
     });
 }
 
