@@ -42,7 +42,7 @@ const bindHandlerToKeydownEvent: BindHandlerToKeydownEvent = (getDisplayName, ev
         }
 
         if (typeof callback.callback === 'function') {
-            callback.callback(event);
+            callback.callback(event, keyCommandEvent);
         }
 
         if (callback.shouldPreventDefault) {

@@ -3,12 +3,13 @@ import * as KeyCommand from 'react-native-key-command';
 import getOperatingSystem from '@libs/getOperatingSystem';
 import CONST from '@src/CONST';
 import bindHandlerToKeydownEvent from './bindHandlerToKeydownEvent';
+import type {KeyCommandEvent} from './bindHandlerToKeydownEvent/types';
 
 const operatingSystem = getOperatingSystem();
 
 type EventHandler = {
     id: string;
-    callback: (event?: KeyboardEvent) => void;
+    callback: (event?: KeyboardEvent, keyCommandEvent?: KeyCommandEvent) => void;
     captureOnInputs: boolean;
     shouldPreventDefault: boolean;
     shouldBubble: boolean | (() => void);
@@ -130,7 +131,7 @@ function getPlatformEquivalentForKeys(keys: ShortcutModifiers): string[] {
  */
 function subscribe(
     key: string,
-    callback: (event?: KeyboardEvent) => void,
+    callback: (event?: KeyboardEvent, keyCommandEvent?: KeyCommandEvent) => void,
     descriptionKey: string | null,
     modifiers: ShortcutModifiers = ['CTRL'],
     captureOnInputs = false,

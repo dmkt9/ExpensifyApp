@@ -11,6 +11,7 @@ import type {Emoji} from '@assets/emojis/types';
 import type {MeasureParentContainerAndCursorCallback} from '@components/AutoCompleteSuggestions/types';
 import Composer from '@components/Composer';
 import type {CustomSelectionChangeEvent, TextSelection} from '@components/Composer/types';
+import useKeyboardShortcut from '@hooks/useKeyboardShortcut';
 import useKeyboardState from '@hooks/useKeyboardState';
 import useLocalize from '@hooks/useLocalize';
 import useOnyx from '@hooks/useOnyx';
@@ -27,6 +28,7 @@ import {canSkipTriggerHotkeys, findCommonSuffixLength, insertText, insertWhiteSp
 import convertToLTRForComposer from '@libs/convertToLTRForComposer';
 import {containsOnlyEmojis, extractEmojis, getAddedEmojis, getPreferredSkinToneIndex, replaceAndExtractEmojis} from '@libs/EmojiUtils';
 import focusComposerWithDelay from '@libs/focusComposerWithDelay';
+import getPlatform from '@libs/getPlatform';
 import {addKeyDownPressListener, removeKeyDownPressListener} from '@libs/KeyboardShortcut/KeyDownPressListener';
 import {detectAndRewritePaste} from '@libs/MarkdownLinkHelpers';
 import Parser from '@libs/Parser';
@@ -510,6 +512,18 @@ function ComposerWithSuggestions({
             }
         },
         [shouldUseNarrowLayout, isKeyboardShown, suggestionsRef, selection.start, includeChronos, handleSendMessage, lastReportAction, reportID, updateComment, selection.end],
+    );
+
+    const isNative = useMemo(() => getPlatform() === CONST.PLATFORM.ANDROID || getPlatform() === CONST.PLATFORM.IOS, []);
+    useKeyboardShortcut(
+        CONST.KEYBOARD_SHORTCUTS.ENTER,
+        useCallback(() => {
+            if (!textInputRef.current?.isFocused()) {
+                return;
+            }
+            handleSendMessage();
+        }, [handleSendMessage]),
+        {isActive: isNative},
     );
 
     useEffect(() => {

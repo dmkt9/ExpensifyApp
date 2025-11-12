@@ -6,7 +6,7 @@ import useSubStep from '@hooks/useSubStep';
 import type {SubStepProps} from '@hooks/useSubStep/types';
 import {clearErrors} from '@userActions/FormActions';
 import ONYXKEYS from '@src/ONYXKEYS';
-import Confirmation from './subSteps/Confirmation';
+// import Confirmation from './subSteps/Confirmation';
 
 type CountryFullStepProps = {
     /** Handles back button press */
@@ -30,7 +30,7 @@ type CountrySubStepProps = {
     policyID: string | undefined;
 } & SubStepProps;
 
-const bodyContent: Array<ComponentType<CountrySubStepProps>> = [Confirmation];
+const bodyContent: Array<ComponentType<CountrySubStepProps>> = [];
 
 function CountryFullStep({onBackButtonPress, stepNames, onSubmit, policyID, isComingFromExpensifyCard}: CountryFullStepProps) {
     const {translate} = useLocalize();

@@ -22,7 +22,7 @@ const bindHandlerToKeydownEvent: BindHandlerToKeydownEvent = (getDisplayName, ev
         }
 
         if (typeof callback.callback === 'function') {
-            callback.callback(event);
+            callback.callback(event, keyCommandEvent);
         }
 
         // If the event should not bubble, short-circuit the loop
