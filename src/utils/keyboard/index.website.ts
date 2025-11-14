@@ -9,6 +9,7 @@ const keyboardVisibilityChangeListenersSet = new Set<(isVisible: boolean) => voi
 
 const subscribeKeyboardVisibilityChange = (cb: (isVisible: boolean) => void) => {
     keyboardVisibilityChangeListenersSet.add(cb);
+    cb(isVisible);
 
     return () => {
         keyboardVisibilityChangeListenersSet.delete(cb);

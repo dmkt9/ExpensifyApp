@@ -1,6 +1,6 @@
 import lodashDebounce from 'lodash/debounce';
 import type {ForwardedRef} from 'react';
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useContext, useEffect, useMemo, useRef, useState} from 'react';
 import {InteractionManager, View} from 'react-native';
 import type {BlurEvent, MeasureInWindowOnSuccessCallback, TextInput, TextInputKeyPressEvent, TextInputScrollEvent} from 'react-native';
 import {useFocusedInputHandler} from 'react-native-keyboard-controller';
@@ -13,6 +13,7 @@ import EmojiPickerButton from '@components/EmojiPicker/EmojiPickerButton';
 import ExceededCommentLength from '@components/ExceededCommentLength';
 import Icon from '@components/Icon';
 import * as Expensicons from '@components/Icon/Expensicons';
+import {ContextMessageEditFocuseState} from '@components/MoneyRequestReportView/MoneyRequestReportActionsList';
 import PressableWithFeedback from '@components/Pressable/PressableWithFeedback';
 import Tooltip from '@components/Tooltip';
 import useAncestors from '@hooks/useAncestors';
@@ -454,6 +455,8 @@ function ReportActionItemMessageEdit({
 
     const closeButtonStyles = [styles.composerSizeButton, {marginVertical: styles.composerSizeButton.marginHorizontal}];
 
+    const contextMessageEditFocuseStateRef = useContext(ContextMessageEditFocuseState);
+
     return (
         <>
             <View
@@ -507,6 +510,10 @@ function ReportActionItemMessageEdit({
                             maxLines={shouldUseNarrowLayout ? CONST.COMPOSER.MAX_LINES_SMALL_SCREEN : CONST.COMPOSER.MAX_LINES} // This is the same that slack has
                             style={[styles.textInputCompose, styles.flex1, styles.bgTransparent]}
                             onFocus={() => {
+                                if (contextMessageEditFocuseStateRef) {
+                                    contextMessageEditFocuseStateRef.current.isFocused = true;
+                                    contextMessageEditFocuseStateRef.current.index = index;
+                                }
                                 setIsFocused(true);
                                 if (textInputRef.current) {
                                     ReportActionComposeFocusManager.editComposerRef.current = textInputRef.current;
@@ -536,6 +543,9 @@ function ReportActionItemMessageEdit({
                             }}
                             onBlur={(event: BlurEvent) => {
                                 setIsFocused(false);
+                                if (contextMessageEditFocuseStateRef) {
+                                    contextMessageEditFocuseStateRef.current.isFocused = false;
+                                }
                                 const relatedTargetId = event.nativeEvent?.target;
                                 if (relatedTargetId === tag.get() || isEmojiPickerVisible()) {
                                     return;

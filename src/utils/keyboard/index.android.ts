@@ -7,18 +7,26 @@ type SimplifiedKeyboardEvent = {
 
 let isVisible = false;
 
+const keyboardVisibilityChangeListenersSet = new Set<(isVisible: boolean) => void>();
+
+const subscribeKeyboardVisibilityChange = (cb: (isVisible: boolean) => void) => {
+    keyboardVisibilityChangeListenersSet.add(cb);
+    cb(isVisible);
+
+    return () => {
+        keyboardVisibilityChangeListenersSet.delete(cb);
+    };
+};
+
 Keyboard.addListener('keyboardDidHide', () => {
     isVisible = false;
+    keyboardVisibilityChangeListenersSet.forEach((cb) => cb(false));
 });
 
 Keyboard.addListener('keyboardDidShow', () => {
     isVisible = true;
+    keyboardVisibilityChangeListenersSet.forEach((cb) => cb(true));
 });
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const subscribeKeyboardVisibilityChange = (cb: (isVisible: boolean) => void) => {
-    return () => {};
-};
 
 const dismiss = (): Promise<void> => {
     return new Promise((resolve) => {

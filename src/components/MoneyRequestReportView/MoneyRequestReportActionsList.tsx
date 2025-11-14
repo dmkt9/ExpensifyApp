@@ -5,7 +5,7 @@ import {isUserValidatedSelector} from '@selectors/Account';
 import {accountIDSelector} from '@selectors/Session';
 import {tierNameSelector} from '@selectors/UserWallet';
 import isEmpty from 'lodash/isEmpty';
-import React, {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
+import React, {createContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import type {NativeScrollEvent, NativeSyntheticEvent} from 'react-native';
 import {DeviceEventEmitter, InteractionManager, View} from 'react-native';
 import type {OnyxEntry} from 'react-native-onyx';
@@ -67,6 +67,7 @@ import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
 import type SCREENS from '@src/SCREENS';
 import type * as OnyxTypes from '@src/types/onyx';
+import KeyboardUtils from '@src/utils/keyboard';
 import MoneyRequestReportTransactionList from './MoneyRequestReportTransactionList';
 import MoneyRequestViewReportFields from './MoneyRequestViewReportFields';
 import ReportActionsListLoadingSkeleton from './ReportActionsListLoadingSkeleton';
@@ -112,6 +113,8 @@ type MoneyRequestReportListProps = {
     /** Whether report actions are still loading and we load the report for the first time, since the last sign in */
     showReportActionsLoadingState?: boolean;
 };
+
+const ContextMessageEditFocuseState = createContext(null) as React.Context<React.RefObject<{isFocused: boolean; index: number}> | null>;
 
 function MoneyRequestReportActionsList({
     report,
@@ -624,10 +627,21 @@ function MoneyRequestReportActionsList({
         [reportScrollManager],
     );
 
+    const contextMessageEditFocuseStateValueRef = useRef({isFocused: false, index: 0});
+    const unsubscribeKeyboardVisibilityChangeRef = useRef(() => {});
     /**
      * Runs when the FlatList finishes laying out
      */
-    const recordTimeToMeasureItemLayout = useCallback(() => {
+    const onLayout = useCallback(() => {
+        unsubscribeKeyboardVisibilityChangeRef.current();
+        unsubscribeKeyboardVisibilityChangeRef.current = KeyboardUtils.subscribeKeyboardVisibilityChange((visible) => {
+            if (!visible || !contextMessageEditFocuseStateValueRef.current.isFocused) {
+                return;
+            }
+            reportScrollManager.scrollToIndex(contextMessageEditFocuseStateValueRef.current.index);
+        });
+
+        // recordTimeToMeasureItemLayout
         if (didLayout.current) {
             return;
         }
@@ -635,7 +649,9 @@ function MoneyRequestReportActionsList({
         didLayout.current = true;
 
         markOpenReportEnd(reportID);
-    }, [reportID]);
+    }, [reportID, reportScrollManager]);
+
+    useEffect(() => unsubscribeKeyboardVisibilityChangeRef.current, [reportID]);
 
     const isSelectAllChecked = selectedTransactionIDs.length > 0 && selectedTransactionIDs.length === transactionsWithoutPendingDelete.length;
     // Wrapped into useCallback to stabilize children re-renders
@@ -724,47 +740,49 @@ function MoneyRequestReportActionsList({
                         />
                     </ScrollView>
                 ) : (
-                    <FlatList
-                        initialNumToRender={INITIAL_NUM_TO_RENDER}
-                        accessibilityLabel={translate('sidebarScreen.listOfChatMessages')}
-                        testID="money-request-report-actions-list"
-                        style={styles.overscrollBehaviorContain}
-                        data={visibleReportActions}
-                        renderItem={renderItem}
-                        onViewableItemsChanged={onViewableItemsChanged}
-                        keyExtractor={keyExtractor}
-                        onLayout={recordTimeToMeasureItemLayout}
-                        onEndReached={onEndReached}
-                        onEndReachedThreshold={0.75}
-                        onStartReached={onStartReached}
-                        onStartReachedThreshold={0.75}
-                        ListHeaderComponent={
-                            <>
-                                <MoneyRequestViewReportFields
-                                    report={report}
-                                    policy={policy}
-                                />
-                                <MoneyRequestReportTransactionList
-                                    report={report}
-                                    transactions={transactions}
-                                    newTransactions={newTransactions}
-                                    hasPendingDeletionTransaction={hasPendingDeletionTransaction}
-                                    reportActions={reportActions}
-                                    violations={violations}
-                                    scrollToNewTransaction={scrollToNewTransaction}
-                                    policy={policy}
-                                    hasComments={visibleReportActions.length > 0}
-                                    isLoadingInitialReportActions={showReportActionsLoadingState}
-                                />
-                            </>
-                        }
-                        keyboardShouldPersistTaps="handled"
-                        onScroll={trackVerticalScrolling}
-                        contentContainerStyle={[shouldUseNarrowLayout ? styles.pt4 : styles.pt2]}
-                        ref={reportScrollManager.ref}
-                        ListEmptyComponent={!isOffline && showReportActionsLoadingState ? <ReportActionsListLoadingSkeleton /> : undefined} // This skeleton component is only used for loading state, the empty state is handled by SearchMoneyRequestReportEmptyState
-                        removeClippedSubviews={false}
-                    />
+                    <ContextMessageEditFocuseState.Provider value={contextMessageEditFocuseStateValueRef}>
+                        <FlatList
+                            initialNumToRender={INITIAL_NUM_TO_RENDER}
+                            accessibilityLabel={translate('sidebarScreen.listOfChatMessages')}
+                            testID="money-request-report-actions-list"
+                            style={styles.overscrollBehaviorContain}
+                            data={visibleReportActions}
+                            renderItem={renderItem}
+                            onViewableItemsChanged={onViewableItemsChanged}
+                            keyExtractor={keyExtractor}
+                            onLayout={onLayout}
+                            onEndReached={onEndReached}
+                            onEndReachedThreshold={0.75}
+                            onStartReached={onStartReached}
+                            onStartReachedThreshold={0.75}
+                            ListHeaderComponent={
+                                <>
+                                    <MoneyRequestViewReportFields
+                                        report={report}
+                                        policy={policy}
+                                    />
+                                    <MoneyRequestReportTransactionList
+                                        report={report}
+                                        transactions={transactions}
+                                        newTransactions={newTransactions}
+                                        hasPendingDeletionTransaction={hasPendingDeletionTransaction}
+                                        reportActions={reportActions}
+                                        violations={violations}
+                                        scrollToNewTransaction={scrollToNewTransaction}
+                                        policy={policy}
+                                        hasComments={visibleReportActions.length > 0}
+                                        isLoadingInitialReportActions={showReportActionsLoadingState}
+                                    />
+                                </>
+                            }
+                            keyboardShouldPersistTaps="handled"
+                            onScroll={trackVerticalScrolling}
+                            contentContainerStyle={[shouldUseNarrowLayout ? styles.pt4 : styles.pt2]}
+                            ref={reportScrollManager.ref}
+                            ListEmptyComponent={!isOffline && showReportActionsLoadingState ? <ReportActionsListLoadingSkeleton /> : undefined} // This skeleton component is only used for loading state, the empty state is handled by SearchMoneyRequestReportEmptyState
+                            removeClippedSubviews={false}
+                        />
+                    </ContextMessageEditFocuseState.Provider>
                 )}
             </View>
             <DecisionModal
@@ -804,3 +822,5 @@ function MoneyRequestReportActionsList({
 MoneyRequestReportActionsList.displayName = 'MoneyRequestReportActionsList';
 
 export default MoneyRequestReportActionsList;
+
+export {ContextMessageEditFocuseState};
