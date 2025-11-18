@@ -9,6 +9,7 @@ import useLocalize from '@hooks/useLocalize';
 import useOnyx from '@hooks/useOnyx';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
 import useThemeStyles from '@hooks/useThemeStyles';
+import {setNVPOnboarding} from '@libs/actions/Welcome';
 import Navigation from '@libs/Navigation/Navigation';
 import {isCurrentUserValidated} from '@libs/UserUtils';
 import {clearGetAccessiblePoliciesErrors, getAccessiblePolicies} from '@userActions/Policy/Policy';
@@ -74,6 +75,12 @@ function BaseOnboardingPrivateDomain({shouldUseNativeStyles, route}: BaseOnboard
                 shouldShowBackButton
                 progressBarPercentage={40}
                 onBackButtonPress={() => {
+                    if (onboardingValues?.shouldValidate === false && !onboardingValues?.isMergeAccountStepSkipped) {
+                        setNVPOnboarding({...onboardingValues, shouldValidate: undefined, isMergeAccountStepSkipped: undefined}).then(() => {
+                            Navigation.goBack(ROUTES.ONBOARDING_WORK_EMAIL.getRoute());
+                        });
+                        return;
+                    }
                     const routeToNavigate = (route.params?.backTo as Route) ?? ROUTES.ONBOARDING_PERSONAL_DETAILS.getRoute();
                     Navigation.goBack(routeToNavigate);
                 }}

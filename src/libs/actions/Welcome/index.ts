@@ -1,5 +1,5 @@
 import HybridAppModule from '@expensify/react-native-hybrid-app';
-import type {OnyxUpdate} from 'react-native-onyx';
+import type {OnyxSetInput, OnyxUpdate} from 'react-native-onyx';
 import Onyx from 'react-native-onyx';
 import * as API from '@libs/API';
 import {SIDE_EFFECT_REQUEST_COMMANDS, WRITE_COMMANDS} from '@libs/API/types';
@@ -156,6 +156,10 @@ function setOnboardingTestDriveModalDismissed() {
     Onyx.merge(ONYXKEYS.NVP_ONBOARDING, {testDriveModalDismissed: true});
 }
 
+function setNVPOnboarding(values: OnyxSetInput<'nvp_onboarding'>) {
+    return Onyx.set(ONYXKEYS.NVP_ONBOARDING, values);
+}
+
 function completeHybridAppOnboarding() {
     if (!CONFIG.IS_HYBRID_APP) {
         return;
@@ -281,4 +285,5 @@ export {
     updateOnboardingValuesAndNavigation,
     setOnboardingUserReportedIntegration,
     setOnboardingTestDriveModalDismissed,
+    setNVPOnboarding,
 };
