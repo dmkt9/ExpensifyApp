@@ -258,16 +258,16 @@ function IOURequestStepConfirmation({
         return translate('iou.confirmDetails');
     }, [iouType, translate, isSharingTrackExpense, isCategorizingTrackExpense]);
 
-    const participants = useMemo(
-        () =>
-            transaction?.participants?.map((participant) => {
-                if (participant.isSender && iouType === CONST.IOU.TYPE.INVOICE) {
-                    return participant;
-                }
-                return participant.accountID ? getParticipantsOption(participant, personalDetails) : getReportOption(participant, reportAttributesDerived, reportDrafts);
-            }) ?? [],
-        [transaction?.participants, iouType, personalDetails, reportAttributesDerived, reportDrafts],
+    const participantSelector = useCallback(
+        (participant: Participant) => {
+            if (participant.isSender && iouType === CONST.IOU.TYPE.INVOICE) {
+                return participant;
+            }
+            return participant.accountID ? getParticipantsOption(participant, personalDetails) : getReportOption(participant, reportAttributesDerived, reportDrafts);
+        },
+        [iouType, personalDetails, reportAttributesDerived, reportDrafts],
     );
+    const participants = useMemo(() => transaction?.participants?.map(participantSelector) ?? [], [transaction?.participants, participantSelector]);
     const isPolicyExpenseChat = useMemo(() => participants?.some((participant) => participant.isPolicyExpenseChat), [participants]);
     const shouldGenerateTransactionThreadReport = !isBetaEnabled(CONST.BETAS.NO_OPTIMISTIC_TRANSACTION_THREADS);
     const formHasBeenSubmitted = useRef(false);
@@ -560,8 +560,23 @@ function IOURequestStepConfirmation({
                     completeTestDriveTask(viewTourTaskReport, viewTourTaskParentReport, isViewTourTaskParentReportArchived, currentUserPersonalDetails.accountID);
                 }
 
+                const {iouRequestType, isFromGlobalCreate, participants: transactionParticipants} = item;
+                let transactionParentChatReport;
+                let transactionPolicyParams;
+                let transactionParticipant;
+                let transactionParticipantReport;
+                const selectedTransactionParticipants = transactionParticipants?.filter((p) => p.selected);
+                if (iouRequestType === CONST.IOU.REQUEST_TYPE.SCAN && isFromGlobalCreate && !!selectedTransactionParticipants?.length) {
+                    transactionParticipant = participantSelector(selectedTransactionParticipants.at(0) as unknown as Participant);
+                    transactionParticipantReport = getReportOrDraftReport(transactionParticipant.reportID);
+                    const moneyRequestContextForParticipant = getMoneyRequestContextForParticipant(transactionParticipant, transactionParticipantReport);
+                    transactionParentChatReport = moneyRequestContextForParticipant.parentChatReport;
+                    transactionPolicyParams = moneyRequestContextForParticipant.policyParams;
+                    existingIOUReport = undefined;
+                }
+
                 const {iouReport} = requestMoneyIOUActions({
-                    report: parentChatReport,
+                    report: transactionParentChatReport ?? parentChatReport,
                     existingIOUReport,
                     optimisticChatReportID,
                     optimisticCreatedReportActionID,
@@ -569,9 +584,9 @@ function IOURequestStepConfirmation({
                     participantParams: {
                         payeeEmail: currentUserPersonalDetails.login,
                         payeeAccountID: currentUserPersonalDetails.accountID,
-                        participant,
+                        participant: transactionParticipant ?? participant,
                     },
-                    policyParams,
+                    policyParams: transactionPolicyParams ?? policyParams,
                     gpsPoint,
                     action,
                     transactionParams: {
@@ -628,6 +643,7 @@ function IOURequestStepConfirmation({
             isASAPSubmitBetaEnabled,
             isViewTourTaskParentReportArchived,
             getMoneyRequestContextForParticipant,
+            participantSelector,
         ],
     );
 
