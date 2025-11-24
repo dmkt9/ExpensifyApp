@@ -5486,6 +5486,10 @@ function addTrackedExpenseToPolicy(parameters: AddTrackedExpenseToPolicyParam, o
 }
 
 function convertTrackedExpenseToRequest(convertTrackedExpenseParams: ConvertTrackedExpenseToRequestParams) {
+    // testing
+    /**
+     * testing
+     */
     const {payerParams, transactionParams, chatParams, iouParams, onyxData, workspaceParams} = convertTrackedExpenseParams;
     const {accountID: payerAccountID, email: payerEmail} = payerParams;
     const {
@@ -6049,6 +6053,7 @@ function requestMoney(requestMoneyInformation: RequestMoneyInformation): {iouRep
                     linkedTrackedExpenseReportID,
                     transactionThreadReportID,
                     isLinkedTrackedExpenseReportArchived,
+                    distance: isDistanceRequestTransactionUtils(transaction) && transaction?.comment?.customUnit?.quantity ? transaction?.comment?.customUnit?.quantity : undefined,
                 },
                 chatParams: {
                     reportID: chatReport.reportID,
