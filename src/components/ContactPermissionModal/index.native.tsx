@@ -9,17 +9,23 @@ import useThemeStyles from '@hooks/useThemeStyles';
 import {setHasDeniedContactImportPrompt} from '@libs/actions/ContactPermissions';
 import {getContactPermission, requestContactPermission} from '@libs/ContactPermission';
 import ONYXKEYS from '@src/ONYXKEYS';
+import isLoadingOnyxValue from '@src/types/utils/isLoadingOnyxValue';
 import type {ContactPermissionModalProps} from './types';
 
 function ContactPermissionModal({onDeny, onGrant, onFocusTextInput}: ContactPermissionModalProps) {
-    const [hasDeniedContactImportPrompt] = useOnyx(ONYXKEYS.HAS_DENIED_CONTACT_IMPORT_PROMPT, {canBeMissing: true});
+    const [hasDeniedContactImportPrompt, hasDeniedContactImportPromptMetadata] = useOnyx(ONYXKEYS.HAS_DENIED_CONTACT_IMPORT_PROMPT, {canBeMissing: true});
     const [isModalVisible, setIsModalVisible] = useState(false);
 
     const styles = useThemeStyles();
     const {translate} = useLocalize();
     const illustrations = useMemoizedLazyIllustrations(['ToddWithPhones'] as const);
+    const isLoadingHasDeniedContactImportPrompt = isLoadingOnyxValue(hasDeniedContactImportPromptMetadata);
 
     useEffect(() => {
+        if (isLoadingHasDeniedContactImportPrompt) {
+            return;
+        }
+
         if (hasDeniedContactImportPrompt) {
             onFocusTextInput();
             return;
@@ -33,7 +39,7 @@ function ContactPermissionModal({onDeny, onGrant, onFocusTextInput}: ContactPerm
             setIsModalVisible(true);
         });
         // eslint-disable-next-line react-compiler/react-compiler, react-hooks/exhaustive-deps
-    }, []);
+    }, [isLoadingHasDeniedContactImportPrompt]);
 
     const handleGrantPermission = () => {
         setIsModalVisible(false);
@@ -61,7 +67,7 @@ function ContactPermissionModal({onDeny, onGrant, onFocusTextInput}: ContactPerm
         });
     };
 
-    if (hasDeniedContactImportPrompt) {
+    if (hasDeniedContactImportPrompt || isLoadingHasDeniedContactImportPrompt) {
         return;
     }
 
