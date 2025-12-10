@@ -100,7 +100,10 @@ function isSplitAction(report: OnyxEntry<Report>, reportTransactions: Array<Onyx
         return false;
     }
 
-    if (report.statusNum && report.statusNum >= CONST.REPORT.STATUS_NUM.CLOSED) {
+    if (
+        report.statusNum &&
+        (isSubmitAndClose(policy) && isInstantSubmitEnabled(policy) ? report.statusNum > CONST.REPORT.STATUS_NUM.CLOSED : report.statusNum >= CONST.REPORT.STATUS_NUM.CLOSED)
+    ) {
         return false;
     }
 

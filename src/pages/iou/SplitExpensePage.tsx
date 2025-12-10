@@ -42,6 +42,7 @@ import getNonEmptyStringOnyxID from '@libs/getNonEmptyStringOnyxID';
 import Navigation from '@libs/Navigation/Navigation';
 import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavigation/types';
 import type {SplitExpenseParamList} from '@libs/Navigation/types';
+import {isInstantSubmitEnabled, isSubmitAndClose} from '@libs/PolicyUtils';
 import {isSplitAction} from '@libs/ReportSecondaryActionUtils';
 import type {TransactionDetails} from '@libs/ReportUtils';
 import {getReportOrDraftReport, getTransactionDetails, isReportApproved, isSettled as isSettledReportUtils} from '@libs/ReportUtils';
@@ -286,7 +287,9 @@ function SplitExpensePage({route}: SplitExpensePageProps) {
                 onSplitExpenseAmountChange,
                 isSelected: splitExpenseTransactionID === item.transactionID,
                 keyForList: item?.transactionID,
-                isEditable: (item.statusNum ?? 0) < CONST.REPORT.STATUS_NUM.CLOSED,
+                isEditable:
+                    !item?.statusNum ||
+                    (isSubmitAndClose(policy) && isInstantSubmitEnabled(policy) ? item.statusNum <= CONST.REPORT.STATUS_NUM.CLOSED : item.statusNum < CONST.REPORT.STATUS_NUM.CLOSED),
             };
         });
 
@@ -304,6 +307,7 @@ function SplitExpensePage({route}: SplitExpensePageProps) {
         splitExpenseTransactionID,
         translate,
         getTranslatedText,
+        policy,
     ]);
 
     const listFooterContent = useMemo(() => {
