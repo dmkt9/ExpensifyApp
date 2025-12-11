@@ -53,6 +53,7 @@ import {
     getMoneyRequestSpendBreakdown,
     getNonHeldAndFullAmount,
     getPolicyName,
+    getReportOrDraftReport,
     getReportStatusColorStyle,
     getReportStatusTranslation,
     getTransactionsWithReceipts,
@@ -692,7 +693,7 @@ function MoneyRequestReportPreviewContent({
                                                 ) : (
                                                     (!shouldShowEmptyPlaceholder || shouldShowAccessPlaceHolder) && (
                                                         <View style={[styles.flexRow, styles.justifyContentStart, styles.alignItemsCenter]}>
-                                                            {!!reportStatus && !!action?.childMoneyRequestCount && (
+                                                            {!!reportStatus && (!!action?.childMoneyRequestCount || !!getReportOrDraftReport(action?.childReportID)?.transactionCount) && (
                                                                 <View
                                                                     style={[
                                                                         styles.reportStatusContainer,
