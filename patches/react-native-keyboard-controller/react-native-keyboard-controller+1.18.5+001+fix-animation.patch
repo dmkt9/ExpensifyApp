@@ -1,0 +1,95 @@
+diff --git a/node_modules/react-native-keyboard-controller/lib/typescript/components/KeyboardAvoidingView/index.d.ts b/node_modules/react-native-keyboard-controller/lib/typescript/components/KeyboardAvoidingView/index.d.ts
+index 4d98e9c..f10c27f 100644
+--- a/node_modules/react-native-keyboard-controller/lib/typescript/components/KeyboardAvoidingView/index.d.ts
++++ b/node_modules/react-native-keyboard-controller/lib/typescript/components/KeyboardAvoidingView/index.d.ts
+@@ -31,6 +31,8 @@ export type KeyboardAvoidingViewProps = KeyboardAvoidingViewBaseProps & ({
+      * `contentContainerStyle` is not allowed for these behaviors.
+      */
+     contentContainerStyle?: never;
++
++    navigation?: NavigationProp<ParamListBase>;
+ });
+ /**
+  * A View component that automatically adjusts its height, position, or bottom padding
+diff --git a/node_modules/react-native-keyboard-controller/src/components/KeyboardAvoidingView/index.tsx b/node_modules/react-native-keyboard-controller/src/components/KeyboardAvoidingView/index.tsx
+index ba162c2..51feb71 100644
+--- a/node_modules/react-native-keyboard-controller/src/components/KeyboardAvoidingView/index.tsx
++++ b/node_modules/react-native-keyboard-controller/src/components/KeyboardAvoidingView/index.tsx
+@@ -1,4 +1,4 @@
+-import React, { forwardRef, useCallback, useMemo } from "react";
++import React, { forwardRef, useCallback, useEffect, useMemo, useState } from "react";
+ import { View } from "react-native";
+ import Reanimated, {
+   interpolate,
+@@ -14,6 +14,8 @@ import { useKeyboardAnimation, useTranslateAnimation } from "./hooks";
+ 
+ import type { LayoutRectangle, ViewProps } from "react-native";
+ 
++import { navigationRef } from '@libs/Navigation/Navigation';
++
+ export type KeyboardAvoidingViewBaseProps = {
+   /**
+    * Controls whether this `KeyboardAvoidingView` instance should take effect.
+@@ -87,6 +89,7 @@ const KeyboardAvoidingView = forwardRef<
+       keyboardVerticalOffset = 0,
+       style,
+       onLayout: onLayoutProps,
++      navigation,
+       ...props
+     },
+     ref,
+@@ -98,6 +101,37 @@ const KeyboardAvoidingView = forwardRef<
+     const keyboard = useKeyboardAnimation();
+     const { height: screenHeight } = useWindowDimensions();
+     
++    const shouldRemovePaddingBottom = useSharedValue<boolean>(false);
++    const [beforeRemoveHandler, setBeforeRemoveHandler] = useState<((()=>void) | undefined)[]>([]);
++
++    useEffect(() => {
++        if(!navigation){
++          return;
++        }
++        const unsubscribeBeforeRemove = navigation.addListener('beforeRemove', (e) => {
++            e.preventDefault();
++            shouldRemovePaddingBottom.set(true);
++            setBeforeRemoveHandler([() => navigationRef.dispatch(e.data.action)]);
++        });
++        const unsubscribeFocus = navigation.addListener('focus', () => {
++            shouldRemovePaddingBottom.set(false);
++            setBeforeRemoveHandler([]);
++        });
++        return ()=>{
++          unsubscribeBeforeRemove();
++          unsubscribeFocus();
++        };
++    }, [navigation, shouldRemovePaddingBottom]);
++
++    useEffect(() => {
++        const [handler] = beforeRemoveHandler;
++        if(!handler){
++          return;
++        }
++        requestAnimationFrame(()=>handler());
++    }, [beforeRemoveHandler]);
++
+     const relativeKeyboardHeight = useCallback(() => {
+       "worklet";
+ 
+@@ -143,7 +177,7 @@ const KeyboardAvoidingView = forwardRef<
+         return {};
+       }
+ 
+-      const bottom = interpolateToRelativeKeyboardHeight(
++      const bottom = shouldRemovePaddingBottom.value ? 0 : interpolateToRelativeKeyboardHeight(
+         keyboard.progress.value,
+       );
+       const translateY = interpolateToRelativeKeyboardHeight(translate.value);
+@@ -176,7 +210,7 @@ const KeyboardAvoidingView = forwardRef<
+         default:
+           return {};
+       }
+-    }, [behavior, enabled, interpolateToRelativeKeyboardHeight]);
++    }, [behavior, enabled, interpolateToRelativeKeyboardHeight, shouldRemovePaddingBottom]);
+     const isPositionBehavior = behavior === "position";
+     const containerStyle = isPositionBehavior ? contentContainerStyle : style;
+     const combinedStyles = useMemo(
