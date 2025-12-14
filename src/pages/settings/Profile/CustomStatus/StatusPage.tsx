@@ -14,6 +14,7 @@ import OfflineWithFeedback from '@components/OfflineWithFeedback';
 import ScreenWrapper from '@components/ScreenWrapper';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
+import type {BaseTextInputProps} from '@components/TextInput/BaseTextInput/types';
 import useAutoFocusInput from '@hooks/useAutoFocusInput';
 import useCurrentUserPersonalDetails from '@hooks/useCurrentUserPersonalDetails';
 import useLocalize from '@hooks/useLocalize';
@@ -36,8 +37,32 @@ import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
 import SCREENS from '@src/SCREENS';
 import INPUT_IDS from '@src/types/form/SettingsStatusSetForm';
+import {isEmptyObject} from '@src/types/utils/EmptyObject';
 
 const initialEmoji = '💬';
+
+function PseuVacationDelegateTextInput({value, onInputChange, onTouched, ...props}: BaseTextInputProps & {onTouched?: () => void}) {
+    const styles = useThemeStyles();
+    useEffect(() => {
+        onTouched?.();
+        // eslint-disable-next-line react-compiler/react-compiler, react-hooks/exhaustive-deps
+    }, []);
+    useEffect(() => {
+        onInputChange?.(value ?? '');
+        // eslint-disable-next-line react-compiler/react-compiler, react-hooks/exhaustive-deps
+    }, [value]);
+
+    return (
+        <View style={[styles.opacity0, styles.pointerEventsNone, styles.h0]}>
+            <TextInput
+                // eslint-disable-next-line react/jsx-props-no-spreading
+                {...props}
+                value={value}
+                onInputChange={onInputChange}
+            />
+        </View>
+    );
+}
 
 function StatusPage() {
     const theme = useTheme();
@@ -172,7 +197,7 @@ function StatusPage() {
     }, []);
 
     const validateForm = useCallback(
-        ({statusText}: FormOnyxValues<typeof ONYXKEYS.FORMS.SETTINGS_STATUS_SET_FORM>): FormInputErrors<typeof ONYXKEYS.FORMS.SETTINGS_STATUS_SET_FORM> => {
+        ({statusText, vacationDelegateError}: FormOnyxValues<typeof ONYXKEYS.FORMS.SETTINGS_STATUS_SET_FORM>): FormInputErrors<typeof ONYXKEYS.FORMS.SETTINGS_STATUS_SET_FORM> => {
             if (brickRoadIndicator) {
                 return {clearAfter: ''};
             }
@@ -183,6 +208,10 @@ function StatusPage() {
                     limit: CONST.STATUS_TEXT_MAX_LENGTH,
                 });
             }
+            if (vacationDelegateError !== '') {
+                errors[INPUT_IDS.VACATION_DELEGATE_ERROR] = vacationDelegateError;
+            }
+
             return errors;
         },
         [brickRoadIndicator, translate],
@@ -284,6 +313,12 @@ function StatusPage() {
                                 shouldShowRightIcon
                                 onPress={() => Navigation.navigate(ROUTES.SETTINGS_VACATION_DELEGATE)}
                                 containerStyle={styles.pr2}
+                            />
+                            <InputWrapper
+                                InputComponent={PseuVacationDelegateTextInput}
+                                inputID={INPUT_IDS.VACATION_DELEGATE_ERROR}
+                                value={isEmptyObject(vacationDelegate?.errors) ? '' : 'error'}
+                                onFocus={() => Navigation.navigate(ROUTES.SETTINGS_VACATION_DELEGATE)}
                             />
                         </OfflineWithFeedback>
                     ) : (
