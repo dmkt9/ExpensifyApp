@@ -113,13 +113,17 @@ export default function (useCachedViewportHeight = false, outerViewRef: RefObjec
         }
         let originalTop = 0;
         let currentTop = 0;
+        let timeoutID = 0 as unknown as NodeJS.Timeout;
         return addViewportResizeListener(() => {
-            outerViewRef.current?.measureInWindow((x, y) => {
-                originalTop = Math.max(originalTop, y);
-                currentTop = y;
-                const offset = originalTop <= currentTop ? 0 : originalTop - currentTop;
-                setOffetTop(offset);
-            });
+            clearTimeout(timeoutID);
+            timeoutID = setTimeout(() => {
+                outerViewRef.current?.measureInWindow((x, y) => {
+                    originalTop = Math.max(originalTop, y);
+                    currentTop = y;
+                    const offset = originalTop <= currentTop ? 0 : originalTop - currentTop;
+                    setOffetTop(offset);
+                });
+            }, CONST.ANIMATED_TRANSITION);
         });
     }, [outerViewRef]);
 
