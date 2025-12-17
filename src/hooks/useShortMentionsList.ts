@@ -23,19 +23,19 @@ export default function useShortMentionsList() {
 
         return Object.values(personalDetails)
             .map((personalDetail) => {
-                if (!personalDetail?.login || isCurrentUserPublicDomain) {
+                if ((!personalDetail?.login && !personalDetail?.displayName) || isCurrentUserPublicDomain) {
                     return;
                 }
 
-                const personalDetailDomain = getEmailDomain(personalDetail.login);
+                const personalDetailDomain = getEmailDomain(personalDetail.login ?? '');
                 const isPersonalDetailPublicDomain = isDomainPublic(personalDetailDomain);
 
                 // If the emails are not in the same private domain, we don't want to highlight them
-                if (isCurrentUserPublicDomain !== isPersonalDetailPublicDomain || (!isCurrentUserPublicDomain && personalDetailDomain !== currentUserDomain)) {
+                if (isPersonalDetailPublicDomain) {
                     return;
                 }
 
-                const [username] = personalDetail.login.split('@');
+                const [username] = personalDetail.login?.split('@') ?? [];
                 const result = [username];
                 if (personalDetail.displayName && personalDetail.displayName !== personalDetail.login) {
                     const [displayName] = personalDetail.displayName.split('@');
