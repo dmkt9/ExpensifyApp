@@ -14,6 +14,7 @@ import useThemeStyles from '@hooks/useThemeStyles';
 import useWindowDimensions from '@hooks/useWindowDimensions';
 import {isMobile, isMobileWebKit, isSafari} from '@libs/Browser';
 import type {ForwardedFSClassProps} from '@libs/Fullstory/types';
+import mergeRefs from '@libs/mergeRefs';
 import addViewportResizeListener from '@libs/VisualViewport';
 import toggleTestToolsModal from '@userActions/TestTool';
 import CONST from '@src/CONST';
@@ -111,7 +112,8 @@ function ScreenWrapperContainer({
     ref,
     forwardedFSClass,
 }: ScreenWrapperContainerProps) {
-    const {windowHeight} = useWindowDimensions(shouldUseCachedViewportHeight);
+    const viewRef = useRef<View>(null);
+    const {windowHeight} = useWindowDimensions(shouldUseCachedViewportHeight, viewRef);
     const {initialHeight} = useInitialDimensions();
     const styles = useThemeStyles();
     const maxHeight = shouldEnableMaxHeight ? windowHeight : undefined;
@@ -202,7 +204,7 @@ function ScreenWrapperContainer({
 
     return (
         <View
-            ref={ref}
+            ref={mergeRefs(viewRef, ref)}
             // This style gives the background for the screens. Stack cards are transparent to make different width screens in RHP possible.
             style={[styles.flex1, styles.appBG, styles.screenWrapperContainerMinHeight(minHeight)]}
             // eslint-disable-next-line react/jsx-props-no-spreading, react-compiler/react-compiler

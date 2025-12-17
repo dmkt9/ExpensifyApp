@@ -1,10 +1,13 @@
-import {useContext, useEffect, useRef} from 'react';
+import {useContext, useEffect, useRef, useState} from 'react';
+import type {RefObject} from 'react';
 // eslint-disable-next-line no-restricted-imports
 import {Dimensions, useWindowDimensions} from 'react-native';
+import type {View} from 'react-native';
 import type {ResponsiveLayoutProperties} from '@components/VideoPlayerContexts/FullScreenContext';
 import {FullScreenContext} from '@components/VideoPlayerContexts/FullScreenContext';
 import useDebouncedState from '@hooks/useDebouncedState';
-import {isMobile as isMobileBrowser, isMobileWebKit} from '@libs/Browser';
+import {isMobile as isMobileBrowser, isMobileSafari, isMobileWebKit} from '@libs/Browser';
+import addViewportResizeListener from '@libs/VisualViewport';
 import variables from '@styles/variables';
 import CONST from '@src/CONST';
 import type WindowDimensions from './types';
@@ -16,7 +19,7 @@ const isMobile = isMobileBrowser();
 /**
  * A wrapper around React Native's useWindowDimensions hook.
  */
-export default function (useCachedViewportHeight = false): WindowDimensions {
+export default function (useCachedViewportHeight = false, outerViewRef: RefObject<View | null> | undefined = undefined): WindowDimensions {
     const {isFullScreenRef, lockedWindowDimensionsRef, lockWindowDimensions, unlockWindowDimensions} = useContext(FullScreenContext) ?? {
         isFullScreenRef: useRef(false),
         lockedWindowDimensionsRef: useRef<ResponsiveLayoutProperties | null>(null),
@@ -103,9 +106,26 @@ export default function (useCachedViewportHeight = false): WindowDimensions {
         cachedViewportHeightWithKeyboardRef.current = windowHeight;
     }, [isCachedViewportHeight, windowHeight]);
 
+    const [offsetTop, setOffetTop] = useState(0);
+    useEffect(() => {
+        if (!isMobileSafari() || !outerViewRef) {
+            return;
+        }
+        let originalTop = 0;
+        let currentTop = 0;
+        return addViewportResizeListener(() => {
+            outerViewRef.current?.measureInWindow((x, y) => {
+                originalTop = Math.max(originalTop, y);
+                currentTop = y;
+                const offset = originalTop <= currentTop ? 0 : originalTop - currentTop;
+                setOffetTop(offset);
+            });
+        });
+    }, [outerViewRef]);
+
     const windowDimensions = {
         windowWidth,
-        windowHeight: isCachedViewportHeight ? cachedViewportHeight : windowHeight,
+        windowHeight: offsetTop + (isCachedViewportHeight ? cachedViewportHeight : windowHeight),
         responsiveLayoutResults,
     };
 
