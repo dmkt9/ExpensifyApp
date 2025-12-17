@@ -59,6 +59,7 @@ function QuickbooksOutOfPocketExpenseConfigurationPage({policy}: WithPolicyConne
                 description = translate('workspace.qbo.accountsPayable');
                 break;
             default:
+                description = translate('workspace.qbo.account');
                 break;
         }
 
@@ -105,7 +106,7 @@ function QuickbooksOutOfPocketExpenseConfigurationPage({policy}: WithPolicyConne
 
     return (
         <ConnectionLayout
-            displayName={QuickbooksOutOfPocketExpenseConfigurationPage.displayName}
+            displayName="QuickbooksOutOfPocketExpenseConfigurationPage"
             headerTitle="workspace.accounting.exportOutOfPocket"
             title="workspace.qbo.exportOutOfPocketExpensesDescription"
             accessVariants={[CONST.POLICY.ACCESS_VARIANTS.ADMIN]}
@@ -138,7 +139,5 @@ function QuickbooksOutOfPocketExpenseConfigurationPage({policy}: WithPolicyConne
         </ConnectionLayout>
     );
 }
-
-QuickbooksOutOfPocketExpenseConfigurationPage.displayName = 'QuickbooksExportOutOfPocketExpensesPage';
 
 export default withPolicyConnections(QuickbooksOutOfPocketExpenseConfigurationPage);

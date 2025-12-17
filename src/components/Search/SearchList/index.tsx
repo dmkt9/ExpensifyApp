@@ -15,6 +15,7 @@ import Modal from '@components/Modal';
 import {usePersonalDetails} from '@components/OnyxListItemProvider';
 import {PressableWithFeedback} from '@components/Pressable';
 import {ScrollOffsetContext} from '@components/ScrollOffsetContextProvider';
+import ScrollView from '@components/ScrollView';
 import type {SearchColumnType, SearchGroupBy, SearchQueryJSON} from '@components/Search/types';
 import type ChatListItem from '@components/SelectionListWithSections/ChatListItem';
 import type TaskListItem from '@components/SelectionListWithSections/Search/TaskListItem';
@@ -37,8 +38,10 @@ import usePrevious from '@hooks/usePrevious';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
 import useSafeAreaPaddings from '@hooks/useSafeAreaPaddings';
 import useThemeStyles from '@hooks/useThemeStyles';
+import useWindowDimensions from '@hooks/useWindowDimensions';
 import {turnOnMobileSelectionMode} from '@libs/actions/MobileSelectionMode';
 import navigationRef from '@libs/Navigation/navigationRef';
+import {getTableMinWidth} from '@libs/SearchUIUtils';
 import variables from '@styles/variables';
 import type {TransactionPreviewData} from '@userActions/Search';
 import CONST from '@src/CONST';
@@ -115,6 +118,9 @@ type SearchListProps = Pick<FlashListProps<SearchListItem>, 'onScroll' | 'conten
     /** Violations indexed by transaction ID */
     violations?: Record<string, TransactionViolations | undefined> | undefined;
 
+    /** Callback to fire when DEW modal should be opened */
+    onDEWModalOpen?: () => void;
+
     /** Reference to the outer element */
     ref?: ForwardedRef<SearchListHandle>;
 };
@@ -165,20 +171,21 @@ function SearchList({
     areAllOptionalColumnsHidden,
     newTransactions = [],
     violations,
+    onDEWModalOpen,
     ref,
 }: SearchListProps) {
     const styles = useThemeStyles();
 
-    const {hash, groupBy} = queryJSON;
+    const {hash, groupBy, type} = queryJSON;
     const flattenedItems = useMemo(() => {
-        if (groupBy) {
+        if (groupBy || type === CONST.SEARCH.DATA_TYPES.EXPENSE_REPORT) {
             if (!isTransactionGroupListItemArray(data)) {
                 return data;
             }
             return data.flatMap((item) => item.transactions);
         }
         return data;
-    }, [data, groupBy]);
+    }, [data, groupBy, type]);
     const flattenedItemsWithoutPendingDelete = useMemo(() => flattenedItems.filter((t) => t?.pendingAction !== CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE), [flattenedItems]);
 
     const selectedItemsLength = useMemo(
@@ -220,10 +227,15 @@ function SearchList({
     const route = useRoute();
     const {getScrollOffset} = useContext(ScrollOffsetContext);
 
+    const [longPressedItemTransactions, setLongPressedItemTransactions] = useState<TransactionListItemType[]>();
+
+    const {windowWidth} = useWindowDimensions();
+    const minTableWidth = getTableMinWidth(columns);
+    const shouldScrollHorizontally = !!SearchTableHeader && minTableWidth > windowWidth;
+
     const handleLongPressRow = useCallback(
-        (item: SearchListItem) => {
+        (item: SearchListItem, itemTransactions?: TransactionListItemType[]) => {
             const currentRoute = navigationRef.current?.getCurrentRoute();
-            const isReadonlyGroupBy = groupBy && groupBy !== CONST.SEARCH.GROUP_BY.REPORTS;
             if (currentRoute && route.key !== currentRoute.key) {
                 return;
             }
@@ -233,14 +245,15 @@ function SearchList({
                 return;
             }
             // disable long press for empty expense reports
-            if ('transactions' in item && item.transactions.length === 0 && !isReadonlyGroupBy) {
+            if ('transactions' in item && item.transactions.length === 0 && !groupBy) {
                 return;
             }
             if (isMobileSelectionModeEnabled) {
-                onCheckboxPress(item);
+                onCheckboxPress(item, itemTransactions);
                 return;
             }
             setLongPressedItem(item);
+            setLongPressedItemTransactions(itemTransactions);
             setIsModalVisible(true);
         },
         [groupBy, route.key, shouldPreventLongPressRow, isSmallScreenWidth, isMobileSelectionModeEnabled, onCheckboxPress],
@@ -251,9 +264,9 @@ function SearchList({
         setIsModalVisible(false);
 
         if (onCheckboxPress && longPressedItem) {
-            onCheckboxPress?.(longPressedItem);
+            onCheckboxPress?.(longPressedItem, longPressedItemTransactions);
         }
-    }, [longPressedItem, onCheckboxPress]);
+    }, [longPressedItem, onCheckboxPress, longPressedItemTransactions]);
 
     /**
      * Scrolls to the desired item index in the section list
@@ -269,7 +282,7 @@ function SearchList({
                 return;
             }
 
-            listRef.current.scrollToIndex({index, animated, viewOffset: variables.contentHeaderHeight});
+            listRef.current.scrollToIndex({index, animated, viewOffset: -variables.contentHeaderHeight});
         },
         [data],
     );
@@ -319,6 +332,8 @@ function SearchList({
                         isDisabled={isDisabled}
                         allReports={allReports}
                         groupBy={groupBy}
+                        searchType={type}
+                        onDEWModalOpen={onDEWModalOpen}
                         userWalletTierName={userWalletTierName}
                         isUserValidated={isUserValidated}
                         personalDetails={personalDetails}
@@ -333,6 +348,7 @@ function SearchList({
             );
         },
         [
+            type,
             groupBy,
             newTransactions,
             shouldAnimate,
@@ -358,14 +374,15 @@ function SearchList({
             isOffline,
             areAllOptionalColumnsHidden,
             violations,
+            onDEWModalOpen,
         ],
     );
 
-    const tableHeaderVisible = (canSelectMultiple || !!SearchTableHeader) && (!groupBy || groupBy === CONST.SEARCH.GROUP_BY.REPORTS);
+    const tableHeaderVisible = (canSelectMultiple || !!SearchTableHeader) && (!groupBy || type === CONST.SEARCH.DATA_TYPES.EXPENSE_REPORT);
     const selectAllButtonVisible = canSelectMultiple && !SearchTableHeader;
     const isSelectAllChecked = selectedItemsLength > 0 && selectedItemsLength === flattenedItemsWithoutPendingDelete.length;
 
-    return (
+    const content = (
         <View style={[styles.flex1, !isKeyboardShown && safeAreaPaddingBottomStyle, containerStyle]}>
             {tableHeaderVisible && (
                 <View style={[styles.searchListHeaderContainerStyle, styles.listTableHeader]}>
@@ -431,6 +448,21 @@ function SearchList({
             </Modal>
         </View>
     );
+
+    if (shouldScrollHorizontally) {
+        return (
+            <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator
+                style={styles.flex1}
+                contentContainerStyle={{width: minTableWidth}}
+            >
+                {content}
+            </ScrollView>
+        );
+    }
+
+    return content;
 }
 
 export default SearchList;
