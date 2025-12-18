@@ -1,17 +1,27 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {Keyboard} from 'react-native';
-import {isMobileChrome} from '@libs/Browser';
+import type {View} from 'react-native';
+import {isMobileChrome, isMobileSafari} from '@libs/Browser';
 import {canUseTouchScreen} from '@libs/DeviceCapabilities';
+import mergeRefs from '@libs/mergeRefs';
+import addViewportResizeListener from '@libs/VisualViewport';
 import CONST from '@src/CONST';
 import BaseSelectionList from './BaseSelectionListWithSections';
-import type {ListItem, SelectionListProps} from './types';
+import type {ListItem, SelectionListHandle, SelectionListProps} from './types';
 
-function SelectionListWithSections<TItem extends ListItem>({onScroll, shouldHideKeyboardOnScroll = true, ref, ...props}: SelectionListProps<TItem>) {
+function SelectionListWithSections<TItem extends ListItem>({onScroll, shouldHideKeyboardOnScroll = true, ref, onContentSizeChange, ...props}: SelectionListProps<TItem>) {
     const [isScreenTouched, setIsScreenTouched] = useState(false);
+    const isScreenTouchedRef = useRef(false);
     const [shouldDisableHoverStyle, setShouldDisableHoverStyle] = useState(false);
 
-    const touchStart = () => setIsScreenTouched(true);
-    const touchEnd = () => setIsScreenTouched(false);
+    const touchStart = () => {
+        setIsScreenTouched(true);
+        isScreenTouchedRef.current = true;
+    };
+    const touchEnd = () => {
+        setIsScreenTouched(false);
+        isScreenTouchedRef.current = false;
+    };
 
     useEffect(() => {
         if (!canUseTouchScreen()) {
@@ -56,14 +66,46 @@ function SelectionListWithSections<TItem extends ListItem>({onScroll, shouldHide
         };
     }, []);
 
+    const hasScrollRef = useRef(false);
     // In SearchPageBottomTab we use useAnimatedScrollHandler from reanimated(for performance reasons) and it returns object instead of function. In that case we cannot change it to a function call, that's why we have to choose between onScroll and defaultOnScroll.
     const defaultOnScroll = () => {
+        hasScrollRef.current = true;
         // Only dismiss the keyboard whenever the user scrolls the screen or `shouldHideKeyboardOnScroll` is true
         if (!isScreenTouched || !shouldHideKeyboardOnScroll) {
             return;
         }
         Keyboard.dismiss();
     };
+
+    const outerViewRef = useRef<View>(null);
+    const listRef = useRef<SelectionListHandle>(null);
+    const contentHeightRef = useRef(0);
+    const onContentSizeChangeHandler = useCallback(
+        (w: number, h: number) => {
+            onContentSizeChange?.(w, h);
+            contentHeightRef.current = h;
+        },
+        [onContentSizeChange],
+    );
+    const viewportResizeHander = () => {
+        if (!isMobileSafari() || isScreenTouchedRef.current || !hasScrollRef.current) {
+            return;
+        }
+        hasScrollRef.current = false;
+        outerViewRef.current?.measureInWindow((x, y, w, h) => {
+            if (h < contentHeightRef.current) {
+                return;
+            }
+            listRef.current?.scrollToIndex(0);
+        });
+    };
+    useEffect(() => addViewportResizeListener(viewportResizeHander), []);
+    useEffect(() => {
+        if (isScreenTouched) {
+            return;
+        }
+        viewportResizeHander();
+    }, [isScreenTouched]);
 
     useEffect(() => {
         if (canUseTouchScreen()) {
@@ -98,7 +140,8 @@ function SelectionListWithSections<TItem extends ListItem>({onScroll, shouldHide
         <BaseSelectionList
             // eslint-disable-next-line react/jsx-props-no-spreading
             {...props}
-            ref={ref}
+            ref={mergeRefs(ref, listRef)}
+            outerViewRef={outerViewRef}
             onScroll={onScroll ?? defaultOnScroll}
             // Ignore the focus if it's caused by a touch event on mobile chrome.
             // For example, a long press will trigger a focus event on mobile chrome.
@@ -107,6 +150,7 @@ function SelectionListWithSections<TItem extends ListItem>({onScroll, shouldHide
             isRowMultilineSupported
             shouldDisableHoverStyle={shouldDisableHoverStyle}
             setShouldDisableHoverStyle={setShouldDisableHoverStyle}
+            onContentSizeChange={onContentSizeChangeHandler}
         />
     );
 }

@@ -144,6 +144,7 @@ function BaseSelectionListWithSections<TItem extends ListItem>({
     shouldHighlightSelectedItem = true,
     shouldDisableHoverStyle = false,
     setShouldDisableHoverStyle = () => {},
+    outerViewRef,
     ref,
 }: SelectionListProps<TItem>) {
     const styles = useThemeStyles();
@@ -1011,7 +1012,10 @@ function BaseSelectionListWithSections<TItem extends ListItem>({
 
     // TODO: test _every_ component that uses SelectionList
     return (
-        <View style={[styles.flex1, !addBottomSafeAreaPadding && paddingBottomStyle, containerStyle]}>
+        <View
+            style={[styles.flex1, !addBottomSafeAreaPadding && paddingBottomStyle, containerStyle]}
+            ref={outerViewRef}
+        >
             {shouldShowTextInput && !shouldShowTextInputAfterHeader && renderInput()}
             {/* If we are loading new options we will avoid showing any header message. This is mostly because one of the header messages says there are no options. */}
             {/* This is misleading because we might be in the process of loading fresh options from the server. */}

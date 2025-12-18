@@ -12,6 +12,7 @@ import type {
     TargetedEvent,
     TextInput,
     TextStyle,
+    View,
     ViewStyle,
 } from 'react-native';
 import type {OnyxCollection, OnyxEntry} from 'react-native-onyx';
@@ -1064,6 +1065,8 @@ type SelectionListProps<TItem extends ListItem> = Partial<ChildrenProps> & {
     /** Whether hover style should be disabled */
     shouldDisableHoverStyle?: boolean;
     setShouldDisableHoverStyle?: React.Dispatch<React.SetStateAction<boolean>>;
+
+    outerViewRef?: React.RefObject<View | null>;
 } & TRightHandSideComponent<TItem>;
 
 type SelectionListHandle = {
