@@ -328,10 +328,18 @@ function ReportScreen({route, navigation}: ReportScreenProps) {
 
     const reportTransactions = useMemo(() => getAllNonDeletedTransactions(allReportTransactions, reportActions, isOffline, true), [allReportTransactions, reportActions, isOffline]);
     // wrapping in useMemo because this is array operation and can cause performance issues
-    const visibleTransactions = useMemo(
-        () => reportTransactions?.filter((transaction) => isOffline || transaction.pendingAction !== CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE),
-        [reportTransactions, isOffline],
-    );
+    const visibleTransactions = useMemo(() => {
+        const originalTransactionIDsSet = new Set();
+        reportTransactions?.forEach((transaction) => {
+            if (!transaction.comment?.originalTransactionID) {
+                return;
+            }
+            originalTransactionIDsSet.add(transaction.comment.originalTransactionID);
+        });
+        return reportTransactions?.filter(
+            (transaction) => !originalTransactionIDsSet.has(transaction.transactionID) && (isOffline || transaction.pendingAction !== CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE),
+        );
+    }, [reportTransactions, isOffline]);
     const reportTransactionIDs = useMemo(() => visibleTransactions?.map((transaction) => transaction.transactionID), [visibleTransactions]);
 
     const transactionThreadReportID = getOneTransactionThreadReportID(report, chatReport, reportActions ?? [], isOffline, reportTransactionIDs);

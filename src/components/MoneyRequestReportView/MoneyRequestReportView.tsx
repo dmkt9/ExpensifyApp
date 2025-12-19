@@ -101,7 +101,18 @@ function MoneyRequestReportView({report, policy, reportMetadata, shouldDisplayRe
     const hasPendingDeletionTransaction = Object.values(reportTransactions ?? {}).some((transaction) => transaction.pendingAction === CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE);
     const transactions = useMemo(() => getAllNonDeletedTransactions(reportTransactions, reportActions, isOffline, true), [reportTransactions, reportActions, isOffline]);
 
-    const visibleTransactions = transactions?.filter((transaction) => isOffline || transaction.pendingAction !== CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE);
+    const visibleTransactions = useMemo(() => {
+        const originalTransactionIDsSet = new Set();
+        transactions?.forEach((transaction) => {
+            if (!transaction.comment?.originalTransactionID) {
+                return;
+            }
+            originalTransactionIDsSet.add(transaction.comment.originalTransactionID);
+        });
+        return transactions?.filter(
+            (transaction) => !originalTransactionIDsSet.has(transaction.transactionID) && (isOffline || transaction.pendingAction !== CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE),
+        );
+    }, [transactions, isOffline]);
     const reportTransactionIDs = visibleTransactions?.map((transaction) => transaction.transactionID);
     const transactionThreadReportID = getOneTransactionThreadReportID(report, chatReport, reportActions ?? [], isOffline, reportTransactionIDs);
     const isSentMoneyReport = useMemo(() => reportActions.some((action) => isSentMoneyReportAction(action)), [reportActions]);
