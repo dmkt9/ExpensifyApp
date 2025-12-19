@@ -103,12 +103,12 @@ function MoneyRequestReportView({report, policy, reportMetadata, shouldDisplayRe
 
     const visibleTransactions = useMemo(() => {
         const originalTransactionIDsSet = new Set();
-        transactions?.forEach((transaction) => {
-            if (!transaction.comment?.originalTransactionID) {
-                return;
+        for (const transaction of transactions) {
+            if (!transaction.comment?.originalTransactionID || transaction.pendingAction === CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE) {
+                continue;
             }
             originalTransactionIDsSet.add(transaction.comment.originalTransactionID);
-        });
+        }
         return transactions?.filter(
             (transaction) => !originalTransactionIDsSet.has(transaction.transactionID) && (isOffline || transaction.pendingAction !== CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE),
         );

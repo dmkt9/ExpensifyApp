@@ -336,12 +336,12 @@ function ReportScreen({route, navigation}: ReportScreenProps) {
     // wrapping in useMemo because this is array operation and can cause performance issues
     const visibleTransactions = useMemo(() => {
         const originalTransactionIDsSet = new Set();
-        reportTransactions?.forEach((transaction) => {
-            if (!transaction.comment?.originalTransactionID) {
-                return;
+        for (const transaction of reportTransactions) {
+            if (!transaction.comment?.originalTransactionID || transaction.pendingAction === CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE) {
+                continue;
             }
             originalTransactionIDsSet.add(transaction.comment.originalTransactionID);
-        });
+        }
         return reportTransactions?.filter(
             (transaction) => !originalTransactionIDsSet.has(transaction.transactionID) && (isOffline || transaction.pendingAction !== CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE),
         );
