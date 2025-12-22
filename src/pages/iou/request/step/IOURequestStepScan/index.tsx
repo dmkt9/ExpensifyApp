@@ -631,7 +631,7 @@ function IOURequestStepScan({
             return;
         }
 
-        if (!isMultiScanEnabled) {
+        if (!isMultiScanEnabled && !!transactions.find((transaction) => transaction.transactionID === CONST.IOU.OPTIMISTIC_TRANSACTION_ID)) {
             removeDraftTransactions(true);
         }
 
