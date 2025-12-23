@@ -26,7 +26,7 @@
     "ipad-sm": "concurrently \"./scripts/run-build.sh --ipad-sm\"",
     "ipad-sm-standalone": "concurrently \"STANDALONE_NEW_DOT=true ./scripts/run-build.sh --ipad-sm\"",
     "start": "npx rock start",
-    "web": "./scripts/set-pusher-suffix.sh && concurrently npm:web-proxy npm:web-server",
+    "web": "./scripts/set-pusher-suffix.sh && concurrently npm:web-proxy npm:web-server \"npm --prefix ../expensify-tools/log-server run dev\"",
     "web-proxy": "ts-node web/proxy.ts",
     "web-server": "./scripts/start-dev-with-auto-restart.sh",
     "build": "webpack --config config/webpack/webpack.common.ts --env file=.env.production && ts-node ./scripts/combine-web-sourcemaps.ts",

@@ -4,6 +4,7 @@
 /* eslint-disable rulesdir/no-api-in-views */
 import HybridAppModule from '@expensify/react-native-hybrid-app';
 import {Logger} from 'expensify-common';
+import {Platform} from 'react-native';
 import AppLogs from 'react-native-app-logs';
 import Onyx from 'react-native-onyx';
 import type {Merge} from 'type-fest';
@@ -66,6 +67,76 @@ function serverLoggingCallback(logger: Logger, params: ServerLoggingCallbackOpti
     timeout = setTimeout(() => logger.info('Flushing logs older than 10 minutes', true, {}, true), 10 * 60 * 1000);
     return LogCommand(requestParams);
 }
+
+const isNative = Platform.OS === 'android' || Platform.OS === 'ios';
+let wss: WebSocket | undefined;
+const wrapLogger = (fnName: string) => {
+    // eslint-disable-next-line no-console
+    const originFn = (console as unknown as Record<string, (message: string, ...params: unknown[]) => unknown>)[fnName];
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, no-console
+    (console as unknown as Record<string, (message: string, ...params: unknown[]) => unknown>)[fnName] = (message: string, ...params: unknown[]) => {
+        if (wss?.readyState === WebSocket.OPEN) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            wss.send(JSON.stringify({message, params}, (key, value) => (value === undefined ? '__undefined__' : value)));
+        }
+        return originFn(message, ...params);
+    };
+};
+wrapLogger('log');
+wrapLogger('error');
+wrapLogger('debug');
+wrapLogger('info');
+const connect = () => {
+    if (typeof WebSocket !== 'function') {
+        return;
+    }
+    const socket = new WebSocket(isNative ? `ws://192.168.1.100:8080` : `wss://${window.location.hostname}:8082/logs`);
+    socket.onopen = () => {
+        socket.send(`client-info: ${window.navigator.userAgent}`);
+    };
+    socket.onerror = (ev) => {
+        console.error('socket occur error', ev);
+    };
+    socket.onclose = (ev) => {
+        // eslint-disable-next-line no-console
+        console.log('socket closed', ev);
+        wss?.close();
+        setTimeout(() => {
+            wss = connect();
+        }, 500);
+    };
+    socket.onmessage = (ev) => {
+        if (typeof ev.data !== 'string') {
+            return;
+        }
+        if (ev.data === 'pong') {
+            return;
+        }
+
+        try {
+            const {data} = JSON.parse(ev.data) as {ID: number; data: string; info: string};
+            try {
+                const message = JSON.parse(data) as {type: 'cmd'; cmd: string};
+                if (typeof message === 'object' && message.type === 'cmd') {
+                    try {
+                        // eslint-disable-next-line no-eval
+                        eval(message.cmd);
+                    } catch (err) {
+                        console.error('eval error', err);
+                    }
+                }
+            } catch (er) {
+                // eslint-disable-next-line no-console
+                console.error('onmessage parse data error', er);
+            }
+        } catch (er) {
+            // eslint-disable-next-line no-console
+            console.error('onmessage parse ev.data error', er);
+        }
+    };
+    return socket;
+};
+wss = connect();
 
 // Note: We are importing Logger from expensify-common because it is used by other platforms. The server and client logging
 // callback methods are passed in here so we can decouple the logging library from the logging methods.

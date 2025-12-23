@@ -29,6 +29,11 @@ const getConfiguration = (environment: Environment): Promise<Configuration> =>
                               context: ['/api', '/staging', '/chat-attachments', '/receipts'],
                               target: 'http://[::1]:9000',
                           },
+                          {
+                              context: '/logs',
+                              target: 'ws://[::1]:8080',
+                              ws: true,
+                          },
                       ],
                   };
 
