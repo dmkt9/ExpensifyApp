@@ -7100,6 +7100,7 @@ function duplicateExpenseTransaction(
     targetPolicy?: OnyxEntry<OnyxTypes.Policy>,
     targetPolicyCategories?: OnyxEntry<OnyxTypes.PolicyCategories>,
     targetReport?: OnyxTypes.Report,
+    isMoneyRequestToManagerMcTest?: boolean,
 ) {
     if (!transaction) {
         return;
@@ -7145,7 +7146,7 @@ function duplicateExpenseTransaction(
     };
 
     // If no workspace is provided the expense should be unreported
-    if (!targetPolicy) {
+    if (!targetPolicy && !isMoneyRequestToManagerMcTest) {
         const trackExpenseParams: CreateTrackExpenseParams = {
             ...params,
             participantParams: {
@@ -7165,7 +7166,7 @@ function duplicateExpenseTransaction(
 
     params.policyParams = {
         policy: targetPolicy,
-        policyTagList: getPolicyTagsData(targetPolicy.id) ?? {},
+        policyTagList: getPolicyTagsData(targetPolicy?.id) ?? {},
         policyCategories: targetPolicyCategories ?? {},
     };
 

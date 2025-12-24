@@ -74,6 +74,7 @@ import {
     isOpenExpenseReport,
     isProcessingReport,
     isReportOwner,
+    isTestTransactionReport,
     navigateOnDeleteExpense,
     navigateToDetailsPage,
     rejectMoneyRequestReason,
@@ -603,6 +604,7 @@ function MoneyReportHeader({
             const optimisticChatReportID = generateReportID();
             const optimisticIOUReportID = generateReportID();
             const activePolicyCategories = allPolicyCategories?.[`${ONYXKEYS.COLLECTION.POLICY_CATEGORIES}${defaultExpensePolicy?.id}`] ?? {};
+            const isMoneyRequestToManagerMcTest = isTestTransactionReport(moneyRequestReport);
 
             for (const item of transactionList) {
                 duplicateTransactionAction(
@@ -613,11 +615,12 @@ function MoneyReportHeader({
                     quickAction,
                     defaultExpensePolicy ?? undefined,
                     activePolicyCategories,
-                    activePolicyExpenseChat,
+                    isMoneyRequestToManagerMcTest ? moneyRequestReport : activePolicyExpenseChat,
+                    isMoneyRequestToManagerMcTest,
                 );
             }
         },
-        [activePolicyExpenseChat, allPolicyCategories, defaultExpensePolicy, isASAPSubmitBetaEnabled, quickAction],
+        [activePolicyExpenseChat, allPolicyCategories, defaultExpensePolicy, isASAPSubmitBetaEnabled, quickAction, moneyRequestReport],
     );
 
     const getStatusIcon: (src: IconAsset) => React.ReactNode = (src) => (
