@@ -10,6 +10,7 @@ import HeaderWithBackButton from '@components/HeaderWithBackButton';
 import type HeaderWithBackButtonProps from '@components/HeaderWithBackButton/types';
 import ScreenWrapper from '@components/ScreenWrapper';
 import ScrollViewWithContext from '@components/ScrollViewWithContext';
+import useBottomSafeSafeAreaPaddingStyle from '@hooks/useBottomSafeSafeAreaPaddingStyle';
 import useHandleBackButton from '@hooks/useHandleBackButton';
 import useNetwork from '@hooks/useNetwork';
 import useOnyx from '@hooks/useOnyx';
@@ -93,6 +94,26 @@ type WorkspacePageWithSectionsProps = WithPolicyAndFullscreenLoadingProps &
         /** Content to be added as modal */
         modals?: ReactNode;
     };
+
+type ContentWithBottomSafeAreaPaddingProps = {
+    children: ReactNode;
+    addBottomSafeAreaPadding?: boolean;
+    addOfflineIndicatorBottomSafeAreaPadding?: boolean;
+};
+
+function ContentWithBottomSafeAreaPadding({children, addBottomSafeAreaPadding, addOfflineIndicatorBottomSafeAreaPadding}: ContentWithBottomSafeAreaPaddingProps) {
+    const contentContainerStyle = useBottomSafeSafeAreaPaddingStyle({
+        addBottomSafeAreaPadding,
+        addOfflineIndicatorBottomSafeAreaPadding,
+        style: {flex: 1},
+    });
+
+    if (!addBottomSafeAreaPadding) {
+        return children;
+    }
+
+    return <View style={contentContainerStyle}>{children}</View>;
+}
 
 function fetchData(policyID: string | undefined, skipVBBACal?: boolean) {
     if (skipVBBACal) {
@@ -238,7 +259,7 @@ function WorkspacePageWithSections({
                                 <View style={[styles.w100, styles.flex1]}>{content}</View>
                             </ScrollViewWithContext>
                         ) : (
-                            content
+                            <ContentWithBottomSafeAreaPadding addBottomSafeAreaPadding={addBottomSafeAreaPadding}>{content}</ContentWithBottomSafeAreaPadding>
                         )}
                         {footer}
                     </>
