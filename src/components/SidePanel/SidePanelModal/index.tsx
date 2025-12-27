@@ -50,9 +50,11 @@ function SidePanelModal({children, sidePanelTranslateX, closeSidePanel, shouldHi
 
     // Web back button: push history state and close Side Panel on popstate
     useEffect(() => {
-        ComposerFocusManager.resetReadyToFocus(uniqueModalId);
         return () => {
-            ComposerFocusManager.setReadyToFocus(uniqueModalId);
+            ComposerFocusManager.resetReadyToFocus(uniqueModalId);
+            setTimeout(() => {
+                ComposerFocusManager.setReadyToFocus(uniqueModalId);
+            }, CONST.ANIMATED_TRANSITION);
         };
         // eslint-disable-next-line react-compiler/react-compiler, react-hooks/exhaustive-deps
     }, []);
