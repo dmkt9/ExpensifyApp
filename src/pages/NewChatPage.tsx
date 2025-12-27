@@ -1,4 +1,4 @@
-import {useFocusEffect} from '@react-navigation/native';
+import {useFocusEffect, useIsFocused} from '@react-navigation/native';
 import reportsSelector from '@selectors/Attributes';
 import isEmpty from 'lodash/isEmpty';
 import reject from 'lodash/reject';
@@ -22,10 +22,11 @@ import useFilteredOptions from '@hooks/useFilteredOptions';
 import useLocalize from '@hooks/useLocalize';
 import useNetwork from '@hooks/useNetwork';
 import useOnyx from '@hooks/useOnyx';
+import usePrevious from '@hooks/usePrevious';
 import useSafeAreaInsets from '@hooks/useSafeAreaInsets';
 import useSingleExecution from '@hooks/useSingleExecution';
 import useThemeStyles from '@hooks/useThemeStyles';
-import {navigateToAndOpenReport, searchInServer, setGroupDraft} from '@libs/actions/Report';
+import {clearGroupChat, navigateToAndOpenReport, searchInServer, setGroupDraft} from '@libs/actions/Report';
 import {canUseTouchScreen} from '@libs/DeviceCapabilities';
 import Log from '@libs/Log';
 import Navigation from '@libs/Navigation/Navigation';
@@ -165,8 +166,11 @@ function useOptions() {
               }, [])
             : null;
 
+    const isFocused = useIsFocused();
+    const prevIsFocused = usePrevious(isFocused);
+
     useEffect(() => {
-        if (!draftSelectedOptions) {
+        if (!draftSelectedOptions || !isFocused) {
             return;
         }
 
@@ -186,7 +190,12 @@ function useOptions() {
 
             return draftSelectedOptions;
         });
-    }, [draftSelectedOptions, setSelectedOptions]);
+
+        if (isFocused && !prevIsFocused) {
+            clearGroupChat();
+        }
+        // eslint-disable-next-line react-compiler/react-compiler, react-hooks/exhaustive-deps
+    }, [draftSelectedOptions, setSelectedOptions, isFocused]);
 
     const handleEndReached = () => {
         if (!hasMore || isLoadingMore || !areOptionsInitialized) {
