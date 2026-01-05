@@ -23,6 +23,7 @@ import isSearchTopmostFullScreenRoute from '@libs/Navigation/helpers/isSearchTop
 import Navigation from '@libs/Navigation/Navigation';
 import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavigation/types';
 import type {MergeTransactionNavigatorParamList} from '@libs/Navigation/types';
+import {getIOUActionForReportID} from '@libs/ReportActionsUtils';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
@@ -61,6 +62,7 @@ function ConfirmationPage({route}: ConfirmationPageProps) {
             return;
         }
         const reportID = mergeTransaction.reportID;
+        const targetIOUAction = getIOUActionForReportID(targetTransaction.reportID, targetTransaction.transactionID);
 
         setIsMergingExpenses(true);
         mergeTransactionRequest({
@@ -76,7 +78,7 @@ function ConfirmationPage({route}: ConfirmationPageProps) {
             isASAPSubmitBetaEnabled,
         });
 
-        const reportIDToDismiss = reportID !== CONST.REPORT.UNREPORTED_REPORT_ID ? reportID : undefined;
+        const reportIDToDismiss = reportID !== CONST.REPORT.UNREPORTED_REPORT_ID ? reportID : targetIOUAction?.childReportID;
 
         // If we're on search, dismiss the modal and stay on search
         if (!isOnSearch && reportIDToDismiss && reportID !== targetTransaction.reportID) {
