@@ -87,6 +87,36 @@ function parseAndLogRoute(state: NavigationState) {
     }
 }
 
+const historyStack = [] as Array<{rootStackIndex: number; lastRouteStackIndex: number}>;
+function pushStack(currentRootStackIndex: number, currentLastRouteStackIndex: number) {
+    let lastStack = historyStack.at(-1);
+
+    while (
+        !!lastStack &&
+        (lastStack.rootStackIndex > currentRootStackIndex || (lastStack.rootStackIndex === currentRootStackIndex && lastStack.lastRouteStackIndex > currentLastRouteStackIndex))
+    ) {
+        historyStack.pop();
+        lastStack = historyStack.at(-1);
+    }
+
+    if (lastStack?.rootStackIndex === currentRootStackIndex && lastStack?.lastRouteStackIndex === currentLastRouteStackIndex) {
+        return;
+    }
+    historyStack.push({rootStackIndex: currentRootStackIndex, lastRouteStackIndex: currentLastRouteStackIndex});
+}
+
+function getPreviousRouteToGoBack() {
+    const prevRouteStack = historyStack.at(-2);
+    if (!prevRouteStack) {
+        return;
+    }
+    const {rootStackIndex, lastRouteStackIndex} = prevRouteStack;
+    const rootState = navigationRef.getRootState();
+    const fullScreenRoute = rootState.routes.at(rootStackIndex);
+    const lastRoute = lastRouteStackIndex > -1 ? fullScreenRoute?.state?.routes.at(lastRouteStackIndex) : undefined;
+    return (lastRoute?.params as unknown as {path: string})?.path ?? lastRoute?.path ?? (fullScreenRoute?.params as unknown as {path: string})?.path ?? fullScreenRoute?.path;
+}
+
 function NavigationRoot({authenticated, lastVisitedPath, initialUrl, onReady}: NavigationRootProps) {
     const firstRenderRef = useRef(true);
     const themePreference = useThemePreference();
@@ -247,6 +277,7 @@ function NavigationRoot({authenticated, lastVisitedPath, initialUrl, onReady}: N
         if (!state) {
             return;
         }
+        pushStack(state.index, state.routes.at(-1)?.state?.index ?? -1);
         const currentRoute = navigationRef.getCurrentRoute();
         Firebase.log(`[NAVIGATION] screen: ${currentRoute?.name}, params: ${JSON.stringify(currentRoute?.params ?? {})}`);
 
@@ -279,5 +310,7 @@ function NavigationRoot({authenticated, lastVisitedPath, initialUrl, onReady}: N
         </NavigationContainer>
     );
 }
+
+export {getPreviousRouteToGoBack};
 
 export default NavigationRoot;

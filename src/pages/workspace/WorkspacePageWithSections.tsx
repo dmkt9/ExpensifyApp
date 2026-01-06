@@ -19,6 +19,7 @@ import useThemeStyles from '@hooks/useThemeStyles';
 import {openWorkspaceView} from '@libs/actions/BankAccounts';
 import goBackFromWorkspaceSettingPages from '@libs/Navigation/helpers/goBackFromWorkspaceSettingPages';
 import Navigation from '@libs/Navigation/Navigation';
+import {getPreviousRouteToGoBack} from '@libs/Navigation/NavigationRoot';
 import {isPendingDeletePolicy, isPolicyAdmin, shouldShowPolicy as shouldShowPolicyUtil} from '@libs/PolicyUtils';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -195,7 +196,14 @@ function WorkspacePageWithSections({
         return true;
     };
 
-    useHandleBackButton(handleOnBackButtonPress);
+    useHandleBackButton(() => {
+        const path = getPreviousRouteToGoBack();
+        if (path) {
+            Navigation.goBack(path as Route);
+            return true;
+        }
+        return handleOnBackButtonPress();
+    });
 
     return (
         <ScreenWrapper
