@@ -1,4 +1,4 @@
-import {useCallback} from 'react';
+import {useCallback, useMemo} from 'react';
 import type {OnyxCollection} from 'react-native-onyx';
 import ONYXKEYS from '@src/ONYXKEYS';
 import type {Transaction} from '@src/types/onyx';
@@ -10,14 +10,10 @@ function useTransactionsByID(transactionIDs: string[] | undefined) {
         [transactionIDs],
     );
 
-    const [transactions] = useOnyx(
-        ONYXKEYS.COLLECTION.TRANSACTION,
-        {
-            selector: transactionsSelector,
-            canBeMissing: true,
-        },
-        [transactionsSelector],
-    );
+    const [allTransactions] = useOnyx(ONYXKEYS.COLLECTION.TRANSACTION, {
+        canBeMissing: true,
+    });
+    const transactions = useMemo(() => transactionsSelector(allTransactions), [transactionsSelector, allTransactions]);
 
     return [transactions];
 }
