@@ -163,6 +163,15 @@ function WorkspacePageWithSections({
     const shouldShowPolicy = useMemo(() => shouldShowPolicyUtil(policy, false, currentUserLogin), [policy, currentUserLogin]);
     const isPendingDelete = isPendingDeletePolicy(policy);
     const prevIsPendingDelete = isPendingDeletePolicy(prevPolicy);
+    const isPerformingDeletionRef = useRef(false);
+
+    useEffect(() => {
+        if (isPerformingDeletionRef.current) {
+            return;
+        }
+
+        isPerformingDeletionRef.current = isPendingDelete !== prevIsPendingDelete;
+    }, [isPendingDelete, prevIsPendingDelete]);
     const shouldShow = useMemo(() => {
         // If the policy object doesn't exist or contains only error data, we shouldn't display it.
         if (((isEmptyObject(policy) || (Object.keys(policy).length === 1 && !isEmptyObject(policy.errors))) && isEmptyObject(policyDraft)) || shouldShowNotFoundPage) {
@@ -170,7 +179,10 @@ function WorkspacePageWithSections({
         }
 
         // We check isPendingDelete and prevIsPendingDelete to prevent the NotFound view from showing right after we delete the workspace
-        return (!isEmptyObject(policy) && !isPolicyAdmin(policy) && !shouldShowNonAdmin) || (!shouldShowPolicy && !isPendingDelete && !prevIsPendingDelete);
+        return (
+            (!isEmptyObject(policy) && !isPolicyAdmin(policy) && !shouldShowNonAdmin) ||
+            (!shouldShowPolicy && (isPendingDelete !== prevIsPendingDelete || isPerformingDeletionRef.current) ? !isPendingDelete && !prevIsPendingDelete : isPendingDelete)
+        );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [policy, shouldShowNonAdmin, shouldShowPolicy]);
 
