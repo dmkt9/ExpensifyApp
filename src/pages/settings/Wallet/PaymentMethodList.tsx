@@ -463,6 +463,7 @@ function PaymentMethodList({
                     )}
                     listItemStyle={listItemStyle}
                     threeDotsMenuItems={threeDotsMenuItems}
+                    policyID={policyID}
                 />
             );
         },
@@ -478,6 +479,7 @@ function PaymentMethodList({
             styles.mb1,
             styles.textLabel,
             styles.colorMuted,
+            policyID,
         ],
     );
 
