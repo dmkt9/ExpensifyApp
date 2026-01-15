@@ -153,6 +153,7 @@ import type {
     Policy,
     PolicyCategories,
     PolicyCategory,
+    PolicyEmployeeList,
     PolicyTag,
     PolicyTagLists,
     Report,
@@ -2437,7 +2438,7 @@ function getIOUConfirmationOptionsFromPayeePersonalDetail(personalDetail: OnyxEn
     };
 }
 
-function getFilteredRecentAttendees(personalDetails: OnyxEntry<PersonalDetailsList>, attendees: Attendee[], recentAttendees: Attendee[]): Option[] {
+function getFilteredRecentAttendees(personalDetails: OnyxEntry<PersonalDetailsList>, attendees: Attendee[], recentAttendees: Attendee[], policyEmployeeList?: PolicyEmployeeList): Option[] {
     const recentAttendeeHasCurrentUser = recentAttendees.find((attendee) => attendee.email === currentUserLogin || attendee.login === currentUserLogin);
     if (!recentAttendeeHasCurrentUser && currentUserLogin) {
         const details = getPersonalDetailByEmail(currentUserLogin);
@@ -2453,7 +2454,11 @@ function getFilteredRecentAttendees(personalDetails: OnyxEntry<PersonalDetailsLi
     }
 
     const filteredRecentAttendees = recentAttendees
-        .filter((attendee) => !attendees.find(({email, displayName}) => (attendee.email ? email === attendee.email : displayName === attendee.displayName)))
+        .filter(
+            (attendee) =>
+                !attendees.find(({email, displayName}) => (attendee.email ? email === attendee.email : displayName === attendee.displayName)) &&
+                (!policyEmployeeList || !attendee.email || (attendee.login ?? attendee.email) in policyEmployeeList),
+        )
         .map((attendee) => ({
             ...attendee,
             login: attendee.email ? attendee.email : attendee.displayName,

@@ -72,7 +72,10 @@ function MoneyRequestAttendeeSelector({attendees = [], onFinish, onAttendeesAdde
 
     const isPaidGroupPolicy = useMemo(() => isPaidGroupPolicyFn(policy), [policy]);
 
-    const recentAttendeeLists = useMemo(() => getFilteredRecentAttendees(personalDetails, attendees, recentAttendees ?? []), [personalDetails, attendees, recentAttendees]);
+    const recentAttendeeLists = useMemo(
+        () => getFilteredRecentAttendees(personalDetails, attendees, recentAttendees ?? [], policy?.employeeList),
+        [personalDetails, attendees, recentAttendees, policy?.employeeList],
+    );
     const initialSelectedOptions = useMemo(
         () =>
             attendees.map((attendee) => ({
@@ -88,7 +91,7 @@ function MoneyRequestAttendeeSelector({attendees = [], onFinish, onAttendeesAdde
     const {searchTerm, debouncedSearchTerm, setSearchTerm, availableOptions, selectedOptions, toggleSelection, areOptionsInitialized, onListEndReached} = useSearchSelector({
         selectionMode: CONST.SEARCH_SELECTOR.SELECTION_MODE_MULTI,
         searchContext: CONST.SEARCH_SELECTOR.SEARCH_CONTEXT_ATTENDEES,
-        includeUserToInvite: true,
+        includeUserToInvite: false,
         excludeLogins: CONST.EXPENSIFY_EMAILS_OBJECT,
         includeRecentReports: false,
         includeCurrentUser: true,
@@ -132,7 +135,7 @@ function MoneyRequestAttendeeSelector({attendees = [], onFinish, onAttendeesAdde
         const orderedOptions = orderOptions(
             {
                 recentReports: availableOptions.recentReports,
-                personalDetails: availableOptions.personalDetails,
+                personalDetails: availableOptions.personalDetails.filter((person) => !policy?.employeeList || !person.login || person.login in policy.employeeList),
                 workspaceChats: availableOptions.workspaceChats ?? [],
             },
             searchTerm,
@@ -149,7 +152,7 @@ function MoneyRequestAttendeeSelector({attendees = [], onFinish, onAttendeesAdde
             personalDetails: orderedOptions.personalDetails,
             workspaceChats: orderedOptions.workspaceChats,
         };
-    }, [availableOptions, isPaidGroupPolicy, areOptionsInitialized, searchTerm, action]);
+    }, [availableOptions, isPaidGroupPolicy, areOptionsInitialized, searchTerm, action, policy?.employeeList]);
 
     const shouldShowErrorMessage = selectedOptions.length < 1;
 
