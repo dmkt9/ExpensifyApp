@@ -1,3 +1,5 @@
+import {parseExpensiMark} from '@expensify/react-native-live-markdown';
+import type {MarkdownRange} from '@expensify/react-native-live-markdown';
 import {Str} from 'expensify-common';
 import lodashSortBy from 'lodash/sortBy';
 import React from 'react';
@@ -312,6 +314,25 @@ function getAddedEmojis(currentEmojis: Emoji[], formerEmojis: Emoji[]): Emoji[] 
     return newEmojis;
 }
 
+function getRangesToExcludeFormatting(ranges: MarkdownRange[]): MarkdownRange[] {
+    let closingSyntaxPosition: number | null = null;
+    return ranges.filter((range, index) => {
+        const nextRange = ranges.at(index + 1);
+        const currentRange = range;
+        if (nextRange && nextRange.type === 'code' && range.type === 'syntax') {
+            currentRange.syntaxType = 'opening';
+            closingSyntaxPosition = nextRange.start + nextRange.length;
+            return true;
+        }
+        if (closingSyntaxPosition !== null && range.type === 'syntax' && range.start <= closingSyntaxPosition) {
+            currentRange.syntaxType = 'closing';
+            closingSyntaxPosition = null;
+            return true;
+        }
+        return range.type === 'emoji';
+    });
+}
+
 /**
  * Replace any emoji name in a text with the emoji icon.
  * If we're on mobile, we also add a space after the emoji granted there's no text after it.
@@ -326,40 +347,105 @@ function replaceEmojis(text: string, preferredSkinTone: OnyxEntry<number | strin
         return {text, emojis: []};
     }
 
-    let newText = text;
+    const parsed = parseExpensiMark(text);
+    // Remove emoji to extract only the code ranges
+    const extractedCodeRanges = getRangesToExcludeFormatting(parsed.filter((range) => range.type !== 'emoji')).reverse();
+    // Since they always exist in pairs, we will pop one pair
+    let currentCodeRange = {inlineCodeStart: extractedCodeRanges.pop(), inlineCodeEnd: extractedCodeRanges.pop()};
+    const checkInsideInlineCode = (startPosition: number, endPosition: number) => {
+        const {inlineCodeStart, inlineCodeEnd} = currentCodeRange;
+        if (!inlineCodeEnd || !inlineCodeStart || inlineCodeStart.start > endPosition) {
+            return false;
+        }
+
+        if (inlineCodeEnd.start < startPosition) {
+            currentCodeRange = {inlineCodeStart: extractedCodeRanges.pop(), inlineCodeEnd: extractedCodeRanges.pop()};
+            return checkInsideInlineCode(startPosition, endPosition);
+        }
+
+        return inlineCodeStart.start < startPosition && inlineCodeEnd.start > endPosition;
+    };
+
+    let newText = '';
+    let cursorPosition = 0;
+    let currentPosition = 0;
     const emojis: Emoji[] = [];
-    const emojiData = text.match(CONST.REGEX.EMOJI_NAME);
-    if (!emojiData || emojiData.length === 0) {
-        return {text: newText, emojis};
-    }
+    const replaceWithEmoji = (partialText: string) => {
+        const emojiData = partialText.match(CONST.REGEX.EMOJI_NAME);
+        if (!emojiData || emojiData.length === 0) {
+            return partialText;
+        }
 
-    let cursorPosition;
+        const textData = partialText.split(CONST.REGEX.EMOJI_NAME);
+        let textResult = '';
+        let currentPositionInPartialText = currentPosition;
+        for (let i = 0; i < emojiData.length; i++) {
+            const emoji = emojiData.at(i) ?? '';
 
-    for (const emoji of emojiData) {
-        const name = emoji.slice(1, -1);
-        let checkEmoji = trie.search(name);
-        // If the user has selected a language other than English, and the emoji doesn't exist in that language,
-        // we will check if the emoji exists in English.
-        if (normalizedLocale !== CONST.LOCALES.DEFAULT && !checkEmoji?.metaData?.code) {
-            const englishTrie = emojisTrie[CONST.LOCALES.DEFAULT];
-            if (englishTrie) {
-                checkEmoji = englishTrie.search(name);
+            const textBeforeEmoji = textData.at(i) ?? '';
+            const startEmojiPosition = currentPositionInPartialText + textBeforeEmoji.length;
+            const endEmojiPosition = startEmojiPosition + emoji.length - 1;
+            currentPositionInPartialText += textBeforeEmoji.length + emoji.length;
+
+            const isInsideInlineCode = checkInsideInlineCode(startEmojiPosition, endEmojiPosition);
+            if (isInsideInlineCode) {
+                // If inside inline code, keep it unchanged
+                textResult += textBeforeEmoji + emoji;
+                continue;
+            }
+            const name = emoji.slice(1, -1);
+            let checkEmoji = trie.search(name);
+            // If the user has selected a language other than English, and the emoji doesn't exist in that language,
+            // we will check if the emoji exists in English.
+            if (normalizedLocale !== CONST.LOCALES.DEFAULT && !checkEmoji?.metaData?.code) {
+                const englishTrie = emojisTrie[CONST.LOCALES.DEFAULT];
+                if (englishTrie) {
+                    checkEmoji = englishTrie.search(name);
+                }
+            }
+            if (checkEmoji?.metaData?.code && checkEmoji?.metaData?.name) {
+                const emojiReplacement = getEmojiCodeWithSkinColor(checkEmoji.metaData as Emoji, preferredSkinTone);
+                emojis.push({
+                    name,
+                    code: checkEmoji.metaData?.code,
+                    types: checkEmoji.metaData.types,
+                });
+
+                // Set the cursor to the end of the last replaced Emoji. Note that we position after
+                // the extra space, if we added one.
+                cursorPosition = newText.length + textResult.length + textBeforeEmoji.length + emojiReplacement.length;
+
+                textResult += textBeforeEmoji + emojiReplacement;
             }
         }
-        if (checkEmoji?.metaData?.code && checkEmoji?.metaData?.name) {
-            const emojiReplacement = getEmojiCodeWithSkinColor(checkEmoji.metaData as Emoji, preferredSkinTone);
-            emojis.push({
-                name,
-                code: checkEmoji.metaData?.code,
-                types: checkEmoji.metaData.types,
-            });
 
-            // Set the cursor to the end of the last replaced Emoji. Note that we position after
-            // the extra space, if we added one.
-            cursorPosition = newText.indexOf(emoji) + (emojiReplacement?.length ?? 0);
+        // We always need to concat the text after the last emoji
+        return textResult + (textData.at(-1) ?? '');
+    };
 
-            newText = newText.replace(emoji, emojiReplacement ?? '');
+    const splitedTextWithEmojis = splitTextWithEmojis(text);
+    if (splitedTextWithEmojis.length === 0) {
+        // If there is no emoji in the text, manually add the entire text
+        splitedTextWithEmojis.push({text, isEmoji: false});
+    }
+
+    for (const {text: partialText, isEmoji} of splitedTextWithEmojis) {
+        if (isEmoji) {
+            const startEmojiPosition = currentPosition;
+            const endEmojiPosition = startEmojiPosition + partialText.length - 1;
+            const isInsideInlineCode = checkInsideInlineCode(startEmojiPosition, endEmojiPosition);
+            const emojiName = Emojis.emojiCodeTableWithSkinTones[partialText]?.name;
+            // If the emoji is inside inline code and the emoji name is found, convert the emoji back to its name
+            if (isInsideInlineCode && emojiName) {
+                const emojiNameReplacement = `:${emojiName}:`;
+                newText += emojiNameReplacement;
+            } else {
+                newText += partialText;
+            }
+        } else {
+            newText += replaceWithEmoji(partialText);
         }
+        currentPosition += partialText.length;
     }
 
     // cursorPosition, when not undefined, points to the end of the last emoji that was replaced.
