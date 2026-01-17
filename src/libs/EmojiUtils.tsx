@@ -428,13 +428,13 @@ function replaceEmojis(text: string, preferredSkinTone: OnyxEntry<number | strin
         // If there is no emoji in the text, manually add the entire text
         splitedTextWithEmojis.push({text, isEmoji: false});
     }
-
+    const localeEmojiList = Emojis.localeEmojis[normalizedLocale];
     for (const {text: partialText, isEmoji} of splitedTextWithEmojis) {
         if (isEmoji) {
             const startEmojiPosition = currentPosition;
             const endEmojiPosition = startEmojiPosition + partialText.length - 1;
             const isInsideInlineCode = checkInsideInlineCode(startEmojiPosition, endEmojiPosition);
-            const emojiName = Emojis.emojiCodeTableWithSkinTones[partialText]?.name;
+            const emojiName = localeEmojiList?.[partialText]?.name ?? Emojis.emojiCodeTableWithSkinTones[partialText]?.name;
             // If the emoji is inside inline code and the emoji name is found, convert the emoji back to its name
             if (isInsideInlineCode && emojiName) {
                 const emojiNameReplacement = `:${emojiName}:`;
