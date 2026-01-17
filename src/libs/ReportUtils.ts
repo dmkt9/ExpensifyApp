@@ -91,6 +91,7 @@ import {
     canSubmitReport,
     createDraftTransaction,
     getIOUReportActionToApproveOrPay,
+    getIOUReportActionToSubmit,
     setMoneyRequestParticipants,
     setMoneyRequestParticipantsFromReport,
     setMoneyRequestReportID,
@@ -4203,16 +4204,17 @@ function getReasonAndReportActionThatRequiresAttention(
     }
 
     const iouReportActionToApproveOrPay = getIOUReportActionToApproveOrPay(optionOrReport, undefined);
+    const iouReportActionToSubmit = getIOUReportActionToSubmit(optionOrReport, undefined);
     const iouReportID = getIOUReportIDFromReportActionPreview(iouReportActionToApproveOrPay);
     const transactions = getReportTransactions(iouReportID);
     const hasOnlyPendingTransactions = transactions.length > 0 && transactions.every((t) => isExpensifyCardTransaction(t) && isPending(t));
-
+    
     // Has a child report that is awaiting action (e.g. approve, pay, add bank account) from current user
     // This will be fixed as part of https://github.com/Expensify/Expensify/issues/507850
     // eslint-disable-next-line @typescript-eslint/no-deprecated
     const policy = getPolicy(optionOrReport.policyID);
     if (
-        (optionOrReport.hasOutstandingChildRequest === true || iouReportActionToApproveOrPay?.reportActionID) &&
+        (iouReportActionToSubmit?.reportActionID || iouReportActionToApproveOrPay?.reportActionID) &&
         (policy?.reimbursementChoice !== CONST.POLICY.REIMBURSEMENT_CHOICES.REIMBURSEMENT_NO || !hasOnlyPendingTransactions)
     ) {
         return {

@@ -111,7 +111,16 @@ import {
     isMoneyRequestAction,
     isReportPreviewAction,
 } from '@libs/ReportActionsUtils';
-import type {OptimisticChatReport, OptimisticCreatedReportAction, OptimisticIOUReportAction, TransactionDetails} from '@libs/ReportUtils';
+import {
+    hasReportBeenReopened,
+    hasReportBeenRetracted,
+    isReportOwner,
+    isWaitingForSubmissionFromCurrentUser,
+    type OptimisticChatReport,
+    type OptimisticCreatedReportAction,
+    type OptimisticIOUReportAction,
+    type TransactionDetails,
+} from '@libs/ReportUtils';
 import {
     buildOptimisticActionableTrackExpenseWhisper,
     buildOptimisticAddCommentReportAction,
@@ -10143,6 +10152,34 @@ function getIOUReportActionToApproveOrPay(chatReport: OnyxEntry<OnyxTypes.Report
     });
 }
 
+function getIOUReportActionToSubmit(chatReport: OnyxEntry<OnyxTypes.Report>, updatedIouReport: OnyxEntry<OnyxTypes.Report>): OnyxEntry<ReportAction> {
+    const chatReportActions = allReportActions?.[`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${chatReport?.reportID}`] ?? {};
+
+    return Object.values(chatReportActions).find((action) => {
+        if (action?.actionName !== CONST.REPORT.ACTIONS.TYPE.REPORT_PREVIEW) {
+            return false;
+        }
+        const iouReport = updatedIouReport?.reportID === action.childReportID ? updatedIouReport : getReportOrDraftReport(action.childReportID);
+        // This will be fixed as part of https://github.com/Expensify/Expensify/issues/507850
+        // eslint-disable-next-line @typescript-eslint/no-deprecated
+        const policy = getPolicy(iouReport?.policyID);
+        const reportActions = allReportActions?.[`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${iouReport?.reportID}`] ?? {};
+
+        // Only take the action that is actually waiting for the current user to submit
+        const reportBeenRetracted = hasReportBeenReopened(iouReport, reportActions) || hasReportBeenRetracted(iouReport, reportActions);
+        const isOwnAndReportHasBeenRetracted = isReportOwner(iouReport) && reportBeenRetracted;
+        const waitingForSubmissionFromCurrentUser = isOwnAndReportHasBeenRetracted || isWaitingForSubmissionFromCurrentUser(chatReport, policy);
+
+        const transactions = Object.values(allTransactions ?? {}).filter((transaction) => !!transaction?.reportID && transaction.reportID === iouReport?.reportID);
+        const iouReportNameValuePairs = allReportNameValuePairs?.[`${ONYXKEYS.COLLECTION.REPORT_NAME_VALUE_PAIRS}${iouReport?.reportID}`];
+        const chatReportNameValuePairs = allReportNameValuePairs?.[`${ONYXKEYS.COLLECTION.REPORT_NAME_VALUE_PAIRS}${chatReport?.reportID}`];
+        const isReportArchived = isArchivedReport(iouReportNameValuePairs) || isArchivedReport(chatReportNameValuePairs);
+
+        const canBeSubmitted = canSubmitReport(iouReport, policy, transactions, allTransactionViolations, isReportArchived, currentUserEmail);
+        return waitingForSubmissionFromCurrentUser && canBeSubmitted && !isDeletedAction(action);
+    });
+}
+
 /**
  * Gets the original creation timestamp from a report's CREATED action or falls back to report.created
  */
@@ -14266,6 +14303,7 @@ export {
     updateLastLocationPermissionPrompt,
     shouldOptimisticallyUpdateSearch,
     getIOUReportActionToApproveOrPay,
+    getIOUReportActionToSubmit,
     getNavigationUrlOnMoneyRequestDelete,
     getNavigationUrlAfterTrackExpenseDelete,
     canSubmitReport,
