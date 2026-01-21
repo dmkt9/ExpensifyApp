@@ -108,6 +108,7 @@ import ROUTES from '@src/ROUTES';
 import SCREENS from '@src/SCREENS';
 import type * as OnyxTypes from '@src/types/onyx';
 import {getEmptyObject, isEmptyObject} from '@src/types/utils/EmptyObject';
+import isLoadingOnyxValue from '@src/types/utils/isLoadingOnyxValue';
 import HeaderView from './HeaderView';
 import ReactionListWrapper from './ReactionListWrapper';
 import ReportActionsView from './report/ReportActionsView';
@@ -179,12 +180,13 @@ function ReportScreen({route, navigation, isInSidePanel = false}: ReportScreenPr
     const [accountManagerReportID] = useOnyx(ONYXKEYS.ACCOUNT_MANAGER_REPORT_ID, {canBeMissing: true});
     const [accountManagerReport] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT}${getNonEmptyStringOnyxID(accountManagerReportID)}`, {canBeMissing: true});
     const [userLeavingStatus = false] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT_USER_IS_LEAVING_ROOM}${reportIDFromRoute}`, {canBeMissing: true});
-    const [reportOnyx] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT}${reportIDFromRoute}`, {allowStaleData: true, canBeMissing: true});
+    const [reportOnyx, reportOnyxMetadata] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT}${reportIDFromRoute}`, {allowStaleData: true, canBeMissing: true});
     const [reportNameValuePairsOnyx] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT_NAME_VALUE_PAIRS}${reportIDFromRoute}`, {allowStaleData: true, canBeMissing: true});
     const [reportMetadata = defaultReportMetadata] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT_METADATA}${reportIDFromRoute}`, {canBeMissing: true, allowStaleData: true});
     const [policies = getEmptyObject<NonNullable<OnyxCollection<OnyxTypes.Policy>>>()] = useOnyx(ONYXKEYS.COLLECTION.POLICY, {allowStaleData: true, canBeMissing: false});
     const [introSelected] = useOnyx(ONYXKEYS.NVP_INTRO_SELECTED, {canBeMissing: true});
     const [onboarding] = useOnyx(ONYXKEYS.NVP_ONBOARDING, {canBeMissing: false});
+    const isLoadingReportOnyx = isLoadingOnyxValue(reportOnyxMetadata);
 
     const parentReportAction = useParentReportAction(reportOnyx);
 
@@ -371,13 +373,23 @@ function ReportScreen({route, navigation, isInSidePanel = false}: ReportScreenPr
             reportMetadata?.isLoadingInitialReportActions ||
             reportMetadata?.isOptimisticReport ||
             isLoadingApp ||
-            userLeavingStatus
+            userLeavingStatus ||
+            !isLoadingReportOnyx
         ) {
             return;
         }
 
         Navigation.goBack();
-    }, [isFocused, reportIDFromRoute, report?.reportID, reportMetadata?.isLoadingInitialReportActions, reportMetadata?.isOptimisticReport, isLoadingApp, userLeavingStatus]);
+    }, [
+        isFocused,
+        reportIDFromRoute,
+        report?.reportID,
+        reportMetadata?.isLoadingInitialReportActions,
+        reportMetadata?.isOptimisticReport,
+        isLoadingApp,
+        userLeavingStatus,
+        isLoadingReportOnyx,
+    ]);
 
     useEffect(() => {
         if (!prevIsFocused || isFocused) {
