@@ -631,6 +631,9 @@ type UserListItemProps<TItem extends ListItem> = ListItemProps<TItem> &
 
         /** The React element that will be shown as a footer */
         FooterComponent?: ReactElement;
+
+        /** Whether to disable the hover style of the item */
+        shouldDisableHoverStyle?: boolean;
     };
 
 type TransactionSelectionListItem<TItem extends ListItem> = ListItemProps<TItem> & Transaction;
@@ -1136,6 +1139,7 @@ type SelectionListHandle = {
     getFocusedOption: () => ListItem | undefined;
     focusTextInput: () => void;
     scrollToFocusedInput: (index: number) => void;
+    resetHoverStyle: () => void;
 };
 
 type ItemLayout = {

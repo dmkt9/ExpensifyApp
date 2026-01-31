@@ -452,6 +452,11 @@ function BaseSelectionListWithSections<TItem extends ListItem>({
         onArrowUpDownCallback,
     });
 
+    const resetHoverStyle = useCallback(() => {
+        setShouldDisableHoverStyle(true);
+        currentHoverIndexRef.current = null;
+    }, [setShouldDisableHoverStyle, currentHoverIndexRef]);
+
     const selectedItemIndex = useMemo(
         () => (initiallyFocusedOptionKey ? flattenedSections.allOptions.findIndex(isItemSelected) : -1),
         [flattenedSections.allOptions, initiallyFocusedOptionKey, isItemSelected],
@@ -965,8 +970,19 @@ function BaseSelectionListWithSections<TItem extends ListItem>({
             getFocusedOption,
             focusTextInput,
             scrollToFocusedInput,
+            resetHoverStyle,
         }),
-        [scrollAndHighlightItem, clearInputAfterSelect, updateAndScrollToFocusedIndex, updateExternalTextInputFocus, scrollToIndex, getFocusedOption, focusTextInput, scrollToFocusedInput],
+        [
+            scrollAndHighlightItem,
+            clearInputAfterSelect,
+            updateAndScrollToFocusedIndex,
+            updateExternalTextInputFocus,
+            scrollToIndex,
+            getFocusedOption,
+            focusTextInput,
+            scrollToFocusedInput,
+            resetHoverStyle,
+        ],
     );
 
     /** Selects row when pressing Enter */

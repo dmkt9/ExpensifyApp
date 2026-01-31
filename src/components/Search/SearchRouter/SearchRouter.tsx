@@ -226,6 +226,7 @@ function SearchRouter({onRouterClose, shouldHideInputCaret, isSearchRouterDispla
                     setAutocompleteSubstitutions(updatedSubstitutionsMap);
                 }
 
+                listRef.current?.resetHoverStyle();
                 if (updatedUserQuery || textInputValue.length > 0) {
                     listRef.current?.updateAndScrollToFocusedIndex(0);
                 } else {
