@@ -9847,7 +9847,7 @@ function getIOUReportActionToApproveOrPay(
     });
 }
 
-function getIOUReportActionToSubmit(chatReport: OnyxEntry<OnyxTypes.Report>, updatedIouReport: OnyxEntry<OnyxTypes.Report>): OnyxEntry<ReportAction> {
+function getIOUReportActionToSubmit(chatReport: OnyxEntry<OnyxTypes.Report>, updatedIouReport: OnyxEntry<OnyxTypes.Report>, currentUserAccountID: number): OnyxEntry<ReportAction> {
     const chatReportActions = allReportActions?.[`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${chatReport?.reportID}`] ?? {};
 
     return Object.values(chatReportActions).find((action) => {
@@ -9870,7 +9870,7 @@ function getIOUReportActionToSubmit(chatReport: OnyxEntry<OnyxTypes.Report>, upd
         const chatReportNameValuePairs = allReportNameValuePairs?.[`${ONYXKEYS.COLLECTION.REPORT_NAME_VALUE_PAIRS}${chatReport?.reportID}`];
         const isReportArchived = isArchivedReport(iouReportNameValuePairs) || isArchivedReport(chatReportNameValuePairs);
 
-        const canBeSubmitted = canSubmitReport(iouReport, policy, transactions, allTransactionViolations, isReportArchived, currentUserEmail);
+        const canBeSubmitted = canSubmitReport(iouReport, policy, transactions, allTransactionViolations, isReportArchived, currentUserEmail, currentUserAccountID);
         return waitingForSubmissionFromCurrentUser && canBeSubmitted && !isDeletedAction(action);
     });
 }
