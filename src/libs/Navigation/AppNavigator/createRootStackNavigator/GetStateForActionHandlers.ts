@@ -5,6 +5,7 @@ import SCREENS_WITH_NAVIGATION_TAB_BAR from '@components/Navigation/TopLevelNavi
 import getIsNarrowLayout from '@libs/getIsNarrowLayout';
 import Log from '@libs/Log';
 import getStateFromPath from '@libs/Navigation/helpers/getStateFromPath';
+import getGoUpActionForState from '@libs/Navigation/helpers/getGoUpActionForState';
 import {isFullScreenName, isSplitNavigatorName} from '@libs/Navigation/helpers/isNavigatorName';
 import isSideModalNavigator from '@libs/Navigation/helpers/isSideModalNavigator';
 import shouldStripRHPOnFullscreenPush from '@libs/Navigation/helpers/shouldStripRHPOnFullscreenPush';
@@ -16,6 +17,7 @@ import type {
     OpenDomainSplitActionType,
     OpenWorkspaceSplitActionType,
     PushActionType,
+    GoBackUnderRHPActionType,
     RemoveFullscreenUnderRHPActionType,
     ReplaceActionType,
     ReplaceFullscreenUnderRHPActionType,
@@ -305,6 +307,42 @@ function handleRemoveFullscreenUnderRHP(
     return rehydratedState;
 }
 
+function handleGoBackUnderRHP(
+    state: StackNavigationState<ParamListBase>,
+    action: GoBackUnderRHPActionType,
+    configOptions: RouterConfigOptions,
+    stackRouter: Router<StackNavigationState<ParamListBase>, CommonActions.Action | StackActionType>,
+) {
+    const rhpRoute = state.routes.at(-1);
+    if (rhpRoute?.name !== NAVIGATORS.RIGHT_MODAL_NAVIGATOR) {
+        return null;
+    }
+
+    const routesWithoutRHP = state.routes.slice(0, -1);
+    if (routesWithoutRHP.length === 0) {
+        return null;
+    }
+
+    const stateWithoutRHP = {...state, routes: routesWithoutRHP, index: routesWithoutRHP.length - 1};
+    const goUpAction = getGoUpActionForState(action.payload.route, stateWithoutRHP, action.payload.compareParams ?? true);
+
+    if (!goUpAction) {
+        return null;
+    }
+
+    const nextStateWithoutRHP = stackRouter.getStateForAction(stateWithoutRHP, goUpAction, configOptions);
+    if (!nextStateWithoutRHP) {
+        return null;
+    }
+
+    const rehydratedStateWithoutRHP = stackRouter.getRehydratedState(nextStateWithoutRHP, configOptions);
+    return {
+        ...rehydratedStateWithoutRHP,
+        routes: [...rehydratedStateWithoutRHP.routes, rhpRoute],
+        index: rehydratedStateWithoutRHP.routes.length,
+    };
+}
+
 /**
  * Handles the DISMISS_MODAL action.
  * If the last route is a modal route, it has to be popped from the navigation stack.
@@ -366,6 +404,7 @@ export {
     handlePushFullscreenAction,
     handleReplaceFullscreenUnderRHP,
     handleRemoveFullscreenUnderRHP,
+    handleGoBackUnderRHP,
     handleReplaceReportsSplitNavigatorAction,
     screensWithEnteringAnimation,
     handleToggleSidePanelWithHistoryAction,

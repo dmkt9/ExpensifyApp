@@ -22,6 +22,10 @@ type RootStackNavigatorActionType =
           payload: {expectedRouteName: string};
       }
     | {
+          type: typeof CONST.NAVIGATION.ACTION_TYPE.GO_BACK_UNDER_RHP;
+          payload: {route: Route; compareParams?: boolean};
+      }
+    | {
           type: typeof CONST.NAVIGATION.ACTION_TYPE.OPEN_WORKSPACE_SPLIT;
           payload: {
               policyID: string;
@@ -78,6 +82,11 @@ type RemoveFullscreenUnderRHPActionType = RootStackNavigatorActionType & {
     payload: {expectedRouteName: string};
 };
 
+type GoBackUnderRHPActionType = RootStackNavigatorActionType & {
+    type: typeof CONST.NAVIGATION.ACTION_TYPE.GO_BACK_UNDER_RHP;
+    payload: {route: Route; compareParams?: boolean};
+};
+
 type RootStackNavigatorRouterOptions = StackRouterOptions;
 
 type RootStackNavigatorAction = CommonActions.Action | StackActionType | RootStackNavigatorActionType;
@@ -91,6 +100,7 @@ export type {
     PreloadActionType,
     ReplaceFullscreenUnderRHPActionType,
     RemoveFullscreenUnderRHPActionType,
+    GoBackUnderRHPActionType,
     RootStackNavigatorAction,
     RootStackNavigatorRouterOptions,
     ToggleSidePanelWithHistoryActionType,

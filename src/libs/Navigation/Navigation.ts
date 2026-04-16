@@ -28,6 +28,7 @@ import type {Account, SidePanel} from '@src/types/onyx';
 import getInitialSplitNavigatorState from './AppNavigator/createSplitNavigator/getInitialSplitNavigatorState';
 import originalCloseRHPFlow from './helpers/closeRHPFlow';
 import findMatchingDynamicSuffix from './helpers/dynamicRoutesUtils/findMatchingDynamicSuffix';
+import getGoUpActionForState from './helpers/getGoUpActionForState';
 import getPathFromState from './helpers/getPathFromState';
 import getStateFromPath from './helpers/getStateFromPath';
 import getTopmostReportParams from './helpers/getTopmostReportParams';
@@ -524,6 +525,43 @@ function goBack(backToRoute?: Route, options?: GoBackOptions) {
             }
         },
         runImmediately,
+    });
+}
+
+function goBackUnderRHP(backToRoute: Route, options?: GoBackOptions) {
+    clearSelectedText();
+
+    if (!canNavigate('goBackUnderRHP', {backToRoute}) || !navigationRef.current) {
+        return;
+    }
+
+    const rootState = navigationRef.current?.getRootState();
+    const stateWithoutRHP =
+        rootState && rootState.routes.at(-1)?.name === NAVIGATORS.RIGHT_MODAL_NAVIGATOR
+            ? {...rootState, routes: rootState.routes.slice(0, -1), index: rootState.routes.length - 2}
+            : rootState;
+
+    if (!stateWithoutRHP) {
+        return;
+    }
+    const compareParams = options?.compareParams ?? defaultGoBackOptions.compareParams;
+    const goUpAction = getGoUpActionForState(backToRoute, stateWithoutRHP, compareParams);
+
+    if (!goUpAction) {
+        return;
+    }
+
+    if (typeof goUpAction.target === 'string' && goUpAction.target !== stateWithoutRHP.key) {
+        navigationRef.current?.dispatch(goUpAction);
+        return;
+    }
+
+    navigationRef.current?.dispatch({
+        type: CONST.NAVIGATION.ACTION_TYPE.GO_BACK_UNDER_RHP,
+        payload: {
+            route: backToRoute,
+            compareParams,
+        },
     });
 }
 
@@ -1140,6 +1178,8 @@ export default {
     getActiveRouteWithoutParams,
     getReportRHPActiveRoute,
     goBack,
+    goBackUnderRHP,
+    getGoUpActionForState,
     isNavigationReady,
     setIsNavigationReady,
     getTopmostReportId,

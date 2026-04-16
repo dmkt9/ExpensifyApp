@@ -10,6 +10,7 @@ import CONST from '@src/CONST';
 import NAVIGATORS from '@src/NAVIGATORS';
 import {
     handleDismissModalAction,
+    handleGoBackUnderRHP,
     handleNavigatingToModalFromModal,
     handleOpenDomainSplitAction,
     handleOpenWorkspaceSplitAction,
@@ -22,6 +23,7 @@ import {
 import syncBrowserHistory from './syncBrowserHistory';
 import type {
     DismissModalActionType,
+    GoBackUnderRHPActionType,
     OpenDomainSplitActionType,
     OpenWorkspaceSplitActionType,
     PreloadActionType,
@@ -60,6 +62,10 @@ function isReplaceFullscreenUnderRHPAction(action: RootStackNavigatorAction): ac
 
 function isRemoveFullscreenUnderRHPAction(action: RootStackNavigatorAction): action is RemoveFullscreenUnderRHPActionType {
     return action.type === CONST.NAVIGATION.ACTION_TYPE.REMOVE_FULLSCREEN_UNDER_RHP;
+}
+
+function isGoBackUnderRHPAction(action: RootStackNavigatorAction): action is GoBackUnderRHPActionType {
+    return action.type === CONST.NAVIGATION.ACTION_TYPE.GO_BACK_UNDER_RHP;
 }
 
 function isToggleSidePanelWithHistoryAction(action: RootStackNavigatorAction): action is ToggleSidePanelWithHistoryActionType {
@@ -163,6 +169,10 @@ function RootStackRouter(options: RootStackNavigatorRouterOptions) {
 
             if (isRemoveFullscreenUnderRHPAction(action)) {
                 return handleRemoveFullscreenUnderRHP(state, action, configOptions, stackRouter);
+            }
+
+            if (isGoBackUnderRHPAction(action)) {
+                return handleGoBackUnderRHP(state, action, configOptions, stackRouter);
             }
 
             if (isReplaceAction(action) && action.payload.name === NAVIGATORS.REPORTS_SPLIT_NAVIGATOR) {

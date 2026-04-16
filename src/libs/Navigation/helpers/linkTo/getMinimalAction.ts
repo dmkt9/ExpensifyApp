@@ -20,12 +20,18 @@ function getMinimalAction(action: NavigationAction, state: NavigationState): Min
     let currentState: State | undefined = state;
     let currentTargetKey: string | undefined;
 
-    while (currentAction.payload && 'name' in currentAction.payload && currentState?.routes[currentState.index ?? -1].name === currentAction.payload.name) {
-        if (!currentState?.routes[currentState.index ?? -1].state) {
+    while (currentAction.payload && 'name' in currentAction.payload) {
+        const currentRoute: State['routes'][number] | undefined = currentState?.routes.at(currentState.index ?? currentState.routes.length - 1);
+
+        if (!currentRoute || currentRoute.name !== currentAction.payload.name) {
             break;
         }
 
-        currentState = currentState?.routes[currentState.index ?? -1].state;
+        if (!currentRoute.state) {
+            break;
+        }
+
+        currentState = currentRoute.state;
         currentTargetKey = currentState?.key;
 
         const payload = currentAction.payload as ActionPayload;

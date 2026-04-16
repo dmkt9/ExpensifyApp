@@ -1,5 +1,10 @@
 import type {CommonActions, ParamListBase, PartialState, Router, RouterConfigOptions, StackActionType} from '@react-navigation/native';
-import type {RemoveFullscreenUnderRHPActionType, ReplaceFullscreenUnderRHPActionType, RootStackNavigatorAction} from '@libs/Navigation/AppNavigator/createRootStackNavigator/types';
+import type {
+    GoBackUnderRHPActionType,
+    RemoveFullscreenUnderRHPActionType,
+    ReplaceFullscreenUnderRHPActionType,
+    RootStackNavigatorAction,
+} from '@libs/Navigation/AppNavigator/createRootStackNavigator/types';
 import type {PlatformStackNavigationState, PlatformStackRouterFactory, PlatformStackRouterOptions} from '@libs/Navigation/PlatformStackNavigation/types';
 import CONST from '@src/CONST';
 import {enhanceStateWithHistory} from './utils';
@@ -12,6 +17,10 @@ function isRemoveFullscreenUnderRHPAction(action: RootStackNavigatorAction): act
     return action.type === CONST.NAVIGATION.ACTION_TYPE.REMOVE_FULLSCREEN_UNDER_RHP;
 }
 
+function isGoBackUnderRHPAction(action: RootStackNavigatorAction): action is GoBackUnderRHPActionType {
+    return action.type === CONST.NAVIGATION.ACTION_TYPE.GO_BACK_UNDER_RHP;
+}
+
 /**
  * Higher-order function that extends a React Navigation stack router with history
  * management for the root stack navigator.
@@ -21,7 +30,7 @@ function isRemoveFullscreenUnderRHPAction(action: RootStackNavigatorAction): act
  * 1. **Side panel** – preserves the CUSTOM_HISTORY_ENTRY_SIDE_PANEL entry through
  *    rehydration so the side panel open/close state survives navigation state rebuilds.
  *
- * 2. **REPLACE/REMOVE_FULLSCREEN_UNDER_RHP** - freezes the history array for these
+ * 2. **REPLACE/REMOVE/GO_BACK_UNDER_RHP** - freezes the history array for these
  *    actions so that useLinking sees historyDelta=0 and does NOT push/pop any browser
  *    history entries for these intermediate state changes. The correct browser history
  *    update happens later when DISMISS_MODAL pops the RHP in the next animation frame.
@@ -56,10 +65,10 @@ function addRootHistoryRouterExtension<RouterOptions extends PlatformStackRouter
                 return null;
             }
 
-            // For REPLACE/REMOVE_FULLSCREEN_UNDER_RHP we intentionally preserve the original
+            // For REPLACE/REMOVE/GO_BACK_UNDER_RHP we intentionally preserve the original
             // history array so that useLinking sees historyDelta=0 and does NOT push/pop any
             // browser history entries for these intermediate state changes.
-            if ((isReplaceFullscreenUnderRHPAction(action) || isRemoveFullscreenUnderRHPAction(action)) && state.history) {
+            if ((isReplaceFullscreenUnderRHPAction(action) || isRemoveFullscreenUnderRHPAction(action) || isGoBackUnderRHPAction(action)) && state.history) {
                 // @ts-expect-error newState can be partial but getRehydratedState handles it correctly.
                 const rehydrated = getRehydratedState(newState, configOptions);
                 return {...rehydrated, history: state.history};
