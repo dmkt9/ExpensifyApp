@@ -4327,10 +4327,7 @@ function navigateToMostRecentReport(
             Navigation.dismissToSuperWideRHP();
         } else {
             const lastAccessedReportRoute = ROUTES.REPORT_WITH_ID.getRoute(lastAccessedReportID);
-            Navigation.goBackUnderRHP(lastAccessedReportRoute);
-            Navigation.isNavigationReady().then(() => {
-                Navigation.dismissModal();
-            });
+            Navigation.goBackUnderRHP(lastAccessedReportRoute, {waitForPreparedRouteReady: true});
         }
     } else {
         const isChatThread = isChatThreadReportUtils(currentReport);

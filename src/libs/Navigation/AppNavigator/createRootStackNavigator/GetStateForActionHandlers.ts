@@ -4,8 +4,8 @@ import type {ParamListBase, Router} from '@react-navigation/routers';
 import SCREENS_WITH_NAVIGATION_TAB_BAR from '@components/Navigation/TopLevelNavigationTabBar/SCREENS_WITH_NAVIGATION_TAB_BAR';
 import getIsNarrowLayout from '@libs/getIsNarrowLayout';
 import Log from '@libs/Log';
-import getStateFromPath from '@libs/Navigation/helpers/getStateFromPath';
 import getGoUpActionForState from '@libs/Navigation/helpers/getGoUpActionForState';
+import getStateFromPath from '@libs/Navigation/helpers/getStateFromPath';
 import {isFullScreenName, isSplitNavigatorName} from '@libs/Navigation/helpers/isNavigatorName';
 import isSideModalNavigator from '@libs/Navigation/helpers/isSideModalNavigator';
 import shouldStripRHPOnFullscreenPush from '@libs/Navigation/helpers/shouldStripRHPOnFullscreenPush';
@@ -14,10 +14,10 @@ import CONST from '@src/CONST';
 import NAVIGATORS from '@src/NAVIGATORS';
 import SCREENS from '@src/SCREENS';
 import type {
+    GoBackUnderRHPActionType,
     OpenDomainSplitActionType,
     OpenWorkspaceSplitActionType,
     PushActionType,
-    GoBackUnderRHPActionType,
     RemoveFullscreenUnderRHPActionType,
     ReplaceActionType,
     ReplaceFullscreenUnderRHPActionType,
@@ -330,7 +330,7 @@ function handleGoBackUnderRHP(
         return null;
     }
 
-    const nextStateWithoutRHP = stackRouter.getStateForAction(stateWithoutRHP, goUpAction, configOptions);
+    const nextStateWithoutRHP = stackRouter.getStateForAction(stateWithoutRHP, goUpAction as CommonActions.Action | StackActionType, configOptions);
     if (!nextStateWithoutRHP) {
         return null;
     }

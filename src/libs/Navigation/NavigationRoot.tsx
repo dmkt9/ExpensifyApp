@@ -233,6 +233,11 @@ function NavigationRoot({authenticated, lastVisitedPath, initialUrl, onReady}: N
             return;
         }
         const currentRoute = navigationRef.getCurrentRoute();
+        const rootState = navigationRef.getRootState();
+        console.log('debugx', {currentRoute, rootState});
+        if (!window.navigationRef) {
+            window.navigationRef = navigationRef;
+        }
         Sentry.addBreadcrumb({message: `[NAVIGATION] screen: ${currentRoute?.name}, params: ${JSON.stringify(currentRoute?.params ?? {})}`, category: 'navigation'});
 
         updateCurrentReportID(state);

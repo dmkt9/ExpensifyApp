@@ -279,6 +279,9 @@ const CONST = {
     // from concurrent navigation state mutations, but short enough to finish well before most users
     // tap submit. If the user submits before this fires, the fallback (non-pre-insert) path is used.
     PRE_INSERT_FULLSCREEN_DELAY: 300,
+    // Maximum time to wait for a prepared fullscreen route under RHP to report readiness
+    // before falling back to dismissing the RHP anyway.
+    PREPARED_ROUTE_REVEAL_TIMEOUT: 1000,
     LIMIT_TIMEOUT: 2147483647,
     ARROW_HIDE_DELAY: 3000,
     MAX_IMAGE_CANVAS_AREA: 16777216,

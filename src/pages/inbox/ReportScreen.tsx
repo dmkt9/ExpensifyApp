@@ -1,5 +1,5 @@
 import {PortalHost} from '@gorhom/portal';
-import React from 'react';
+import React, {useCallback, useEffect} from 'react';
 import type {ViewStyle} from 'react-native';
 import {View} from 'react-native';
 import ScreenWrapper from '@components/ScreenWrapper';
@@ -11,9 +11,11 @@ import useSubmitToDestinationVisible from '@hooks/useSubmitToDestinationVisible'
 import useThemeStyles from '@hooks/useThemeStyles';
 import useViewportOffsetTop from '@hooks/useViewportOffsetTop';
 import getNonEmptyStringOnyxID from '@libs/getNonEmptyStringOnyxID';
+import Navigation from '@libs/Navigation/Navigation';
 import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavigation/types';
 import type {ReportsSplitNavigatorParamList, RightModalNavigatorParamList} from '@navigation/types';
 import CONST from '@src/CONST';
+import ROUTES from '@src/ROUTES';
 import SCREENS from '@src/SCREENS';
 import AccountManagerBanner from './AccountManagerBanner';
 import {AgentZeroStatusProvider} from './AgentZeroStatusContext';
@@ -54,6 +56,17 @@ function ReportScreen({route, navigation}: ReportScreenProps) {
     );
 
     const actionListValue = useActionListContextValue();
+    const notifyPreparedReportReady = useCallback(() => {
+        if (!reportIDFromRoute) {
+            return;
+        }
+
+        Navigation.notifyPreparedRouteIsReady(ROUTES.REPORT_WITH_ID.getRoute(reportIDFromRoute));
+    }, [reportIDFromRoute]);
+
+    useEffect(() => {
+        notifyPreparedReportReady();
+    }, [notifyPreparedReportReady]);
 
     return (
         <WideRHPOverlayWrapper shouldWrap={route.name === SCREENS.RIGHT_MODAL.SEARCH_REPORT}>
@@ -75,7 +88,10 @@ function ReportScreen({route, navigation}: ReportScreenProps) {
                                     <ReportLifecycleHandler reportID={reportIDFromRoute} />
                                     <ReportHeader />
                                     <AccountManagerBanner reportID={reportIDFromRoute} />
-                                    <View style={[styles.flex1, styles.flexRow]}>
+                                    <View
+                                        style={[styles.flex1, styles.flexRow]}
+                                        onLayout={notifyPreparedReportReady}
+                                    >
                                         <WideRHPReceiptPanel />
                                         <AgentZeroStatusProvider reportID={reportIDFromRoute}>
                                             <View

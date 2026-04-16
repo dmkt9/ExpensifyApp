@@ -38,6 +38,7 @@ import isSideModalNavigator from './helpers/isSideModalNavigator';
 import linkTo from './helpers/linkTo';
 import getMinimalAction from './helpers/linkTo/getMinimalAction';
 import type {LinkToOptions} from './helpers/linkTo/types';
+import {clearPendingPreparedRouteReveal, markPreparedRouteReady, startPendingPreparedRouteReveal} from './helpers/pendingPreparedRouteReveal';
 import replaceWithSplitNavigator from './helpers/replaceWithSplitNavigator';
 import setNavigationActionToMicrotaskQueue from './helpers/setNavigationActionToMicrotaskQueue';
 import {linkingConfig} from './linkingConfig';
@@ -413,6 +414,10 @@ type GoBackOptions = {
     afterTransition?: () => void | undefined;
     // If true, waits for ongoing transitions to finish before going back. Defaults to false (goes back immediately).
     waitForTransition?: boolean;
+    // If true, prepare the route under RHP and wait for the destination screen to signal readiness before dismissing the RHP.
+    waitForPreparedRouteReady?: boolean;
+    // Optional override for how long to wait before falling back to dismissing the RHP without a readiness signal.
+    preparedRouteRevealTimeout?: number;
 };
 
 const defaultGoBackOptions: Required<Pick<GoBackOptions, 'compareParams' | 'waitForTransition'>> = {
@@ -551,6 +556,24 @@ function goBackUnderRHP(backToRoute: Route, options?: GoBackOptions) {
         return;
     }
 
+    const shouldWaitForPreparedRouteReady = options?.waitForPreparedRouteReady;
+    const isAlreadyPreparedRoute = goUpAction.type === CONST.NAVIGATION.ACTION_TYPE.POP && !!goUpAction.payload && 'count' in goUpAction.payload && goUpAction.payload.count === 0;
+
+    if (shouldWaitForPreparedRouteReady) {
+        DeviceEventEmitter.emit(CONST.MODAL_EVENTS.DISABLE_RHP_ANIMATION);
+
+        if (isAlreadyPreparedRoute) {
+            requestAnimationFrame(() => dismissModal());
+            return;
+        }
+
+        startPendingPreparedRouteReveal(backToRoute, {
+            timeoutMs: options?.preparedRouteRevealTimeout ?? CONST.PREPARED_ROUTE_REVEAL_TIMEOUT,
+            onReveal: () => requestAnimationFrame(() => dismissModal()),
+            onCancel: () => DeviceEventEmitter.emit(CONST.MODAL_EVENTS.RESTORE_RHP_ANIMATION),
+        });
+    }
+
     if (typeof goUpAction.target === 'string' && goUpAction.target !== stateWithoutRHP.key) {
         navigationRef.current?.dispatch(goUpAction);
         return;
@@ -563,6 +586,10 @@ function goBackUnderRHP(backToRoute: Route, options?: GoBackOptions) {
             compareParams,
         },
     });
+}
+
+function notifyPreparedRouteIsReady(route: Route) {
+    markPreparedRouteReady(route);
 }
 
 /**
@@ -807,6 +834,7 @@ function getTopmostSuperWideRHPReportID(state: NavigationState = navigationRef.g
  */
 function dismissModal({ref = navigationRef, afterTransition, waitForTransition}: {ref?: NavigationRef; afterTransition?: () => void; waitForTransition?: boolean} = {}) {
     clearSelectedTextIfComposerBlurred();
+    clearPendingPreparedRouteReveal();
     const runImmediately = !waitForTransition;
     isNavigationReady().then(() => {
         TransitionTracker.runAfterTransitions({
@@ -1179,6 +1207,7 @@ export default {
     getReportRHPActiveRoute,
     goBack,
     goBackUnderRHP,
+    notifyPreparedRouteIsReady,
     getGoUpActionForState,
     isNavigationReady,
     setIsNavigationReady,
