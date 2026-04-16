@@ -2568,8 +2568,8 @@ function buildNewTransactionAfterReviewingDuplicates(reviewDuplicateTransaction:
         modifiedMerchant: reviewDuplicateTransaction?.merchant,
         merchant: reviewDuplicateTransaction?.merchant,
         comment: {...reviewDuplicateTransaction?.comment, comment: reviewDuplicateTransaction?.description},
-        // Clear stale taxName/taxValue so MoneyRequestView derives them fresh from the policy using the updated taxCode
-        ...(reviewDuplicateTransaction?.taxCode !== undefined && {taxName: undefined, taxValue: undefined}),
+        // If the taxCode changes, clear stale taxName/taxValue so MoneyRequestView derives them fresh from the policy using the updated taxCode
+        ...(reviewDuplicateTransaction?.taxCode !== undefined && reviewDuplicateTransaction?.taxCode !== duplicatedTransaction?.taxCode && {taxName: undefined, taxValue: undefined}),
     };
 }
 
@@ -2590,7 +2590,6 @@ function buildMergeDuplicatesParams(
         reimbursable: reviewDuplicates?.reimbursable ?? false,
         category: reviewDuplicates?.category ?? '',
         tag: reviewDuplicates?.tag ?? '',
-        taxCode: reviewDuplicates?.taxCode ?? '',
         merchant: reviewDuplicates?.merchant ?? '',
         comment: reviewDuplicates?.description ?? '',
     };
