@@ -102,7 +102,7 @@ function handleNavigationGuards(
     if (guardResult.type === 'REDIRECT') {
         const redirectState = getAdaptedStateFromPath(guardResult.route, linkingConfig.config);
 
-        if (!redirectState || !redirectState.routes) {
+        if (!redirectState?.routes) {
             return null;
         }
 
