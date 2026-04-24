@@ -105,6 +105,9 @@ function mergeDuplicates({transactionThreadReportID: optimisticTransactionThread
             taxCode: params.taxCode ?? originalSelectedTransaction?.taxCode,
             taxAmount: taxAmount ?? originalSelectedTransaction?.taxAmount,
             taxValue: taxValue ?? originalSelectedTransaction?.taxValue,
+            // Clear `taxName` to stay consistent with the server response,
+            // and avoid retaining an outdated value that doesn’t match the new `taxCode`.
+            taxName: params.taxCode ? null : originalSelectedTransaction?.taxName,
         },
     };
 
@@ -381,6 +384,9 @@ function resolveDuplicates({taxAmount, taxValue, ...params}: MergeDuplicatesPara
             taxCode: params.taxCode ?? originalSelectedTransaction?.taxCode,
             taxAmount: taxAmount ?? originalSelectedTransaction?.taxAmount,
             taxValue: taxValue ?? originalSelectedTransaction?.taxValue,
+            // Clear `taxName` to stay consistent with the server response,
+            // and avoid retaining an outdated value that doesn’t match the new `taxCode`.
+            taxName: params.taxCode ? null : originalSelectedTransaction?.taxName,
         },
     };
 
