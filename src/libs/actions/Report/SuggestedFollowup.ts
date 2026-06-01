@@ -17,8 +17,9 @@ const CONCIERGE_RESPONSE_DELAY_MS = 4000;
 /**
  * Resolves a suggested followup by posting the selected question as a comment
  * and optimistically updating the HTML to mark the followup-list as resolved.
- * If the followup has a pre-generated response, it will show a "Concierge is typing"
- * indicator briefly before displaying the response.
+ * If the followup has a pre-generated response, it will be queued and displayed
+ * after a short delay. The server-owned agentZeroProcessingIndicator NVP drives
+ * the "Concierge is thinking..." indicator during that window.
  * @param report - The report where the action exists
  * @param notifyReportID - The report ID to notify for new actions
  * @param reportAction - The report action containing the followup-list
@@ -34,6 +35,7 @@ function resolveSuggestedFollowup(
     timezoneParam: Timezone,
     currentUserAccountID: number,
     currentUserEmail: string | undefined,
+    delegateAccountID: number | undefined,
     ancestors: Ancestor[] = [],
 ) {
     const reportID = report?.reportID;
@@ -53,6 +55,7 @@ function resolveSuggestedFollowup(
         event: 'followup_clicked',
         reportID,
         reportActionID,
+        questionText: selectedFollowup.text,
         hasPregeneratedResponse: !!selectedFollowup.response,
     });
 
@@ -62,12 +65,11 @@ function resolveSuggestedFollowup(
     });
 
     if (!selectedFollowup.response) {
-        addComment({report, notifyReportID: notifyReportID ?? reportID, ancestors, text: selectedFollowup.text, timezoneParam, currentUserAccountID});
+        addComment({report, notifyReportID: notifyReportID ?? reportID, ancestors, text: selectedFollowup.text, timezoneParam, currentUserAccountID, delegateAccountID});
         return;
     }
 
-    // If there's a pre-generated response, show typing indicator then display response after delay
-
+    // If there's a pre-generated response, queue it for delayed display.
     const optimisticConciergeReportActionID = rand64();
 
     // Post user's comment immediately
@@ -84,6 +86,7 @@ function resolveSuggestedFollowup(
             optimisticConciergeReportActionID,
             pregeneratedResponse: selectedFollowup.response,
         },
+        delegateAccountID,
     });
 
     // Use the full delay as createdOffset so the Concierge response timestamp is
@@ -98,6 +101,7 @@ function resolveSuggestedFollowup(
         isHTML: true,
         currentUserEmail,
         currentUserAccountID,
+        delegateAccountIDParam: delegateAccountID,
     });
 
     addOptimisticConciergeActionWithDelay(reportID, optimisticConciergeAction);
@@ -110,47 +114,49 @@ function resolveSuggestedFollowup(
  * when the time arrives, with proper lifecycle cleanup.
  */
 function addOptimisticConciergeActionWithDelay(reportID: string, optimisticConciergeAction: OptimisticReportAction) {
-    Onyx.update([
-        // Store the pending response for the scheduler to process
-        {
-            onyxMethod: Onyx.METHOD.SET,
-            key: `${ONYXKEYS.COLLECTION.PENDING_CONCIERGE_RESPONSE}${reportID}`,
-            value: {
-                reportAction: optimisticConciergeAction.reportAction,
-                displayAfter: Date.now() + CONCIERGE_RESPONSE_DELAY_MS,
-            },
-        },
-        // Show "Concierge is typing..." indicator
-        {
-            onyxMethod: Onyx.METHOD.MERGE,
-            key: `${ONYXKEYS.COLLECTION.REPORT_USER_IS_TYPING}${reportID}`,
-            value: {[CONST.ACCOUNT_ID.CONCIERGE]: true},
-        },
-    ]);
+    // The "Concierge is thinking..." indicator is driven by the server-owned
+    // agentZeroProcessingIndicator NVP, so this client-local delayed response
+    // must not also write REPORT_USER_IS_TYPING for Concierge.
+    Onyx.set(`${ONYXKEYS.COLLECTION.PENDING_CONCIERGE_RESPONSE}${reportID}`, {
+        reportAction: optimisticConciergeAction.reportAction,
+        displayAfter: Date.now() + CONCIERGE_RESPONSE_DELAY_MS,
+    });
 }
 
 /**
- * Discards a stale pending concierge response and clears the typing indicator.
+ * Discards a stale pending concierge response.
  * Called when the response has been pending too long (e.g. app was killed and restarted).
  */
 function discardPendingConciergeAction(reportID: string | undefined) {
-    Onyx.update([
-        {
-            onyxMethod: Onyx.METHOD.SET,
-            key: `${ONYXKEYS.COLLECTION.PENDING_CONCIERGE_RESPONSE}${reportID}`,
-            value: null,
-        },
-        {
-            onyxMethod: Onyx.METHOD.MERGE,
-            key: `${ONYXKEYS.COLLECTION.REPORT_USER_IS_TYPING}${reportID}`,
-            value: {[CONST.ACCOUNT_ID.CONCIERGE]: false},
-        },
-    ]);
+    Onyx.multiSet({
+        [`${ONYXKEYS.COLLECTION.PENDING_CONCIERGE_RESPONSE}${reportID}`]: null,
+        [`${ONYXKEYS.COLLECTION.CONCIERGE_PENDING_FOLLOWUP_LIST}${reportID}`]: null,
+    });
+}
+
+/**
+ * Clears the pending followup-list marker for a report so the skeleton stops rendering.
+ */
+function clearPendingFollowupList(reportID: string | undefined) {
+    if (!reportID) {
+        return;
+    }
+    Onyx.set(`${ONYXKEYS.COLLECTION.CONCIERGE_PENDING_FOLLOWUP_LIST}${reportID}`, null);
+}
+
+/**
+ * Temporarily hides the pending followup-list skeleton.
+ */
+function hidePendingFollowupList(reportID: string | undefined, hidden: boolean | null) {
+    if (!reportID) {
+        return;
+    }
+    Onyx.merge(`${ONYXKEYS.COLLECTION.CONCIERGE_PENDING_FOLLOWUP_LIST}${reportID}`, {hidden});
 }
 
 /**
  * Applies a pending concierge response by moving it to REPORT_ACTIONS
- * and clearing the pending state and typing indicator.
+ * and clearing the pending state.
  */
 function applyPendingConciergeAction(reportID: string | undefined, reportAction: ReportAction) {
     Onyx.update([
@@ -161,15 +167,15 @@ function applyPendingConciergeAction(reportID: string | undefined, reportAction:
         },
         {
             onyxMethod: Onyx.METHOD.MERGE,
-            key: `${ONYXKEYS.COLLECTION.REPORT_USER_IS_TYPING}${reportID}`,
-            value: {[CONST.ACCOUNT_ID.CONCIERGE]: false},
-        },
-        {
-            onyxMethod: Onyx.METHOD.MERGE,
             key: `${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${reportID}`,
             value: {[reportAction.reportActionID]: reportAction},
+        },
+        {
+            onyxMethod: Onyx.METHOD.SET,
+            key: `${ONYXKEYS.COLLECTION.CONCIERGE_PENDING_FOLLOWUP_LIST}${reportID}`,
+            value: {reportActionID: reportAction.reportActionID, createdAt: Date.now()},
         },
     ]);
 }
 
-export {resolveSuggestedFollowup, discardPendingConciergeAction, applyPendingConciergeAction, CONCIERGE_RESPONSE_DELAY_MS};
+export {resolveSuggestedFollowup, discardPendingConciergeAction, applyPendingConciergeAction, clearPendingFollowupList, hidePendingFollowupList, CONCIERGE_RESPONSE_DELAY_MS};

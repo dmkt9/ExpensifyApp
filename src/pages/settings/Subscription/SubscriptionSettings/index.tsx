@@ -15,6 +15,7 @@ import RenderHTML from '@components/RenderHTML';
 import ScreenWrapper from '@components/ScreenWrapper';
 import ScrollView from '@components/ScrollView';
 import Text from '@components/Text';
+import {useCurrencyListActions} from '@hooks/useCurrencyList';
 import useCurrentUserPersonalDetails from '@hooks/useCurrentUserPersonalDetails';
 import useEnvironment from '@hooks/useEnvironment';
 import useHasTeam2025Pricing from '@hooks/useHasTeam2025Pricing';
@@ -30,9 +31,9 @@ import useTheme from '@hooks/useTheme';
 import useThemeIllustrations from '@hooks/useThemeIllustrations';
 import useThemeStyles from '@hooks/useThemeStyles';
 import {openLink} from '@libs/actions/Link';
-import {convertToDisplayString, convertToShortDisplayString} from '@libs/CurrencyUtils';
+import {convertToShortDisplayString} from '@libs/CurrencyUtils';
 import {isPolicyAdmin} from '@libs/PolicyUtils';
-import {getSubscriptionPrice, isSubscriptionTypeOfInvoicing} from '@libs/SubscriptionUtils';
+import {getSubscriptionPrice, isSubscriptionTypeOfInvoicing, shouldUseSimplifiedCollectSubscriptionUI} from '@libs/SubscriptionUtils';
 import type {SkeletonSpanReasonAttributes} from '@libs/telemetry/useSkeletonSpan';
 import Navigation from '@navigation/Navigation';
 import NotFoundPage from '@pages/ErrorPage/NotFoundPage';
@@ -48,6 +49,7 @@ import ROUTES from '@src/ROUTES';
 
 function SubscriptionSettings() {
     const {translate} = useLocalize();
+    const {convertToDisplayString} = useCurrencyListActions();
     const icons = useMemoizedLazyExpensifyIcons(['Coins']);
     const styles = useThemeStyles();
     const theme = useTheme();
@@ -81,7 +83,6 @@ function SubscriptionSettings() {
     const {isSecretPromoCode, promoDiscountValue} = getPrivatePromoDiscountInfo(privatePromoDiscount, isAnnual);
 
     const isExpensifyCodeApplied = !!privatePromoCode;
-    const shouldShowExpensifyCodeSection = !isSecretPromoCode;
     const shouldShowExpensifyCodeHintText = isExpensifyCodeApplied && promoDiscountValue !== undefined;
     const subscriptionPrice = getSubscriptionPrice(subscriptionPlan, preferredCurrency, privateSubscription?.type, hasTeam2025Pricing);
     const priceDetails = translate(`subscription.yourPlan.${subscriptionPlan === CONST.POLICY.TYPE.CORPORATE ? 'control' : 'collect'}.${isAnnual ? 'priceAnnual' : 'pricePayPerUse'}`, {
@@ -89,7 +90,7 @@ function SubscriptionSettings() {
         upper: convertToShortDisplayString(subscriptionPrice * CONST.SUBSCRIPTION_PRICE_FACTOR, preferredCurrency),
     });
     const adminsChatReportID = isActivePolicyAdmin && activePolicy?.chatReportIDAdmins ? activePolicy.chatReportIDAdmins?.toString() : undefined;
-    const isCollect = subscriptionPlan === CONST.POLICY.TYPE.TEAM;
+    const shouldUseSimplifiedCollectUI = shouldUseSimplifiedCollectSubscriptionUI(subscriptionPlan, hasTeam2025Pricing);
     const collectPriceDisplay = convertToShortDisplayString(subscriptionPrice, preferredCurrency);
 
     const onOptionSelected = (option: SubscriptionType) => {
@@ -232,7 +233,7 @@ function SubscriptionSettings() {
                 onBackButtonPress={() => Navigation.goBack()}
             />
             <ScrollView contentContainerStyle={[styles.flexGrow1, styles.ph5]}>
-                {isCollect ? (
+                {shouldUseSimplifiedCollectUI ? (
                     <>
                         <Text style={[styles.textSupporting, styles.mb5]}>{translate('subscription.subscriptionSettings.collectBillingDescription')}</Text>
                         <View style={[styles.renderHTML, styles.mb5]}>
@@ -315,22 +316,20 @@ function SubscriptionSettings() {
                         ) : null}
                     </>
                 )}
-                {shouldShowExpensifyCodeSection && (
-                    <MenuItemWithTopDescription
-                        description={translate('subscription.expensifyCode.title')}
-                        shouldShowRightIcon={!isExpensifyCodeApplied}
-                        onPress={onExpensifyCodePress}
-                        interactive={!isExpensifyCodeApplied}
-                        wrapperStyle={styles.sectionMenuItemTopDescription}
-                        style={styles.mt5}
-                        title={privatePromoCode}
-                        hintText={
-                            shouldShowExpensifyCodeHintText
-                                ? translate('subscription.expensifyCode.discountMessage', `${promoDiscountValue ?? ''}`, `${privatePromoCodeValidBillingCycles ?? ''}`)
-                                : undefined
-                        }
-                    />
-                )}
+                <MenuItemWithTopDescription
+                    description={translate('subscription.expensifyCode.title')}
+                    shouldShowRightIcon={!isExpensifyCodeApplied}
+                    onPress={onExpensifyCodePress}
+                    interactive={!isExpensifyCodeApplied}
+                    wrapperStyle={styles.sectionMenuItemTopDescription}
+                    style={styles.mt5}
+                    title={isSecretPromoCode ? '' : privatePromoCode}
+                    hintText={
+                        shouldShowExpensifyCodeHintText
+                            ? translate('subscription.expensifyCode.discountMessage', `${promoDiscountValue ?? ''}`, `${privatePromoCodeValidBillingCycles ?? ''}`)
+                            : undefined
+                    }
+                />
                 {!!freebieCredits && freebieCredits > 0 && (
                     <MenuItemWithTopDescription
                         description={translate('subscription.details.creditBalance')}
