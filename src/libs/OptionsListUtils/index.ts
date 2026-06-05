@@ -2572,7 +2572,14 @@ function getValidOptions(
             recentReportOptions = recentReportOptions.filter((report) => !report.reportID || !reportIDsToExclude.has(report.reportID));
         }
     } else if (recentAttendees && recentAttendees?.length > 0) {
-        recentAttendees.filter((attendee) => {
+        recentReportOptions = filterReports(recentAttendees as SearchOptionData[], searchTerms) as Array<SearchOption<Report>>;
+
+        // Only cap the recent attendees when there's no active search. During a search we surface every match, since
+        // all recent attendees are excluded from "Contacts" and capped-off matches would otherwise vanish from the list.
+        if (maxRecentReportElements && searchTerms.length === 0) {
+            recentReportOptions = recentReportOptions.slice(0, maxRecentReportElements);
+        }
+        recentReportOptions.filter((attendee) => {
             const login = attendee.login ?? attendee.displayName;
             if (login) {
                 loginsToExcludeFromSuggestions[login] = true;
@@ -2581,13 +2588,6 @@ function getValidOptions(
 
             return false;
         });
-        recentReportOptions = filterReports(recentAttendees as SearchOptionData[], searchTerms) as Array<SearchOption<Report>>;
-
-        // Only cap the recent attendees when there's no active search. During a search we surface every match, since
-        // all recent attendees are excluded from "Contacts" and capped-off matches would otherwise vanish from the list.
-        if (maxRecentReportElements && searchTerms.length === 0) {
-            recentReportOptions = recentReportOptions.slice(0, maxRecentReportElements);
-        }
     }
 
     // Get valid personal details and check if we can find the current user:
